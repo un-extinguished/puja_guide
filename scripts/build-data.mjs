@@ -633,6 +633,7 @@ const meta = {
   communityCount: pandals.filter((p) => p.source === 'community').length,
   stationCount: stations.length,
   lineCount: lines.length,
+  stationWalkResidualMedian: fits[Math.floor(fits.length / 2)],
   routeCount: routes.length,
   photoCount: photoCount,
   upstreamRows: rows.length,

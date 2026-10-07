@@ -1268,7 +1268,7 @@ PAGES.metroIndex = () => {
       <p class="fine">A station is listed under every line it is on. The alignment drawn on the map joins published station coordinates, so it is an approximation of the track, not a survey.${state.lines.some((l) => (l.stationsNotDrawn || []).length) ? ` One station, ${state.lines.flatMap((l) => l.stationsNotDrawn || []).join(', ')}, has no coordinate we trust and is not drawn.` : ''}</p>` : ''}
       <h2>Every station</h2>
       <table><thead><tr><th>Station</th><th>Pandals naming it</th><th>Closest</th></tr></thead><tbody>${rows}</tbody></table>
-      <p class="fine">Station pins sit on published station coordinates; the walk against each pandal is the distance the dataset publishes. The two agree to a median of about ${Math.round(state.stations.map((x) => x.fitMeters).filter((x) => x != null).sort((a, b) => a - b)[Math.floor(state.stations.length / 2)] || 0)} m, which is the honest size of the error you should expect.</p>`,
+      <p class="fine">Station pins sit on published station coordinates; the walk against each pandal is the distance the dataset publishes. The two agree to a median of about ${fmtM(state.meta.stationWalkResidualMedian || 0)}, which is the honest size of the error you should expect.</p>`,
   };
 };
 
