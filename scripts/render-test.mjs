@@ -261,6 +261,19 @@ for (const [mode, how] of [['media', 'with matchMedia'], ['width', 'without matc
   expect(a.realErrors.length === 0, a.realErrors.length ? 'unexpected errors: ' + a.realErrors.join(' | ') : `no unexpected errors (${how})`);
 }
 
+console.log('\nthe metro page, line by line');
+{
+  const r = await render({ maplibre: mapStub(), label: 'metro', url: 'http://localhost/metro' });
+  const t = r.pageText;
+  expect(/Blue Line/.test(t) && /Green Line/.test(t) && /Yellow Line/.test(t), 'the lines are listed with their stations');
+  expect(/Jai Hind/.test(t), 'the Yellow Line lists Jai Hind, the airport station');
+  expect(/Dum Dum Cantonment/.test(t), 'and Dum Dum Cantonment');
+  expect(!/Michael Nagar/.test(t), 'but not Michael Nagar, which is not open');
+  expect(/Barun Sengupta/.test(t) && /not drawn/.test(t), 'a station with no coordinate we trust is named and marked as not drawn');
+  expect(/published station coordinates/.test(t), 'the page says the lines join published coordinates, not a survey');
+  expect(r.realErrors.length === 0, r.realErrors.length ? 'unexpected errors: ' + r.realErrors.join(' | ') : 'no unexpected errors');
+}
+
 console.log('\nthe numbers on the pages match the data');
 {
   const meta = JSON.parse(read('data/meta.json'));

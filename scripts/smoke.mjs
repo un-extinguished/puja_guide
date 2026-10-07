@@ -178,6 +178,49 @@ try {
   fail(`plan drawer threw: ${err.message}`);
 }
 
+/* ---------------------------------------------------------------- the data
+   The metro lines are drawn straight from these numbers, so check them here
+   rather than trusting the app to notice. A [lat, lon] slip puts the whole
+   network in the sea, which is exactly what happened once. */
+console.log('\nthe metro lines in data/lines.json');
+try {
+  const lines = JSON.parse(read('data/lines.json'));
+  const expected = { blue: 26, green: 12, purple: 7, orange: 9, yellow: 4 };
+  if (lines.length !== 5) fail(`expected 5 lines, found ${lines.length}`);
+  else ok(`5 lines: ${lines.map((l) => l.name.split(' ')[0]).join(', ')}`);
+
+  const all = lines.flatMap((l) => l.coordinates);
+  const wrongWayRound = all.filter((c) => !(c[0] > 88 && c[0] < 89 && c[1] > 22 && c[1] < 23));
+  if (wrongWayRound.length) fail(`${wrongWayRound.length} coordinate(s) are not [lon, lat] in Kolkata, e.g. ${JSON.stringify(wrongWayRound[0])}`);
+  else ok(`all ${all.length} vertices are [lon, lat] in the right part of Kolkata`);
+
+  for (const l of lines) {
+    const want = expected[l.slug];
+    if (l.stationCount !== want) fail(`${l.name}: ${l.stationCount} stations, expected ${want}`);
+    if (l.coordinates.length < 2) fail(`${l.name}: fewer than 2 vertices, nothing to draw`);
+    if (l.approximate !== true) fail(`${l.name} does not admit the alignment is approximate`);
+    // a polyline can never be shorter than the straight line between its ends
+    const m = (a, b) => {
+      const r = Math.PI / 180, dLat = (b[1] - a[1]) * r, dLon = (b[0] - a[0]) * r;
+      return 6371000 * Math.sqrt(dLat ** 2 + (Math.cos(a[1] * r) * dLon) ** 2);
+    };
+    const endToEnd = m(l.coordinates[0], l.coordinates[l.coordinates.length - 1]);
+    const drawn = l.coordinates.slice(1).reduce((sum, c, i) => sum + m(l.coordinates[i], c), 0);
+    if (drawn < endToEnd - 1) fail(`${l.name}: drawn length ${Math.round(drawn)} m is shorter than its own endpoints are apart`);
+    else if (drawn > 45000) fail(`${l.name}: drawn length ${Math.round(drawn)} m is implausibly long for a city metro line`);
+    else ok(`${l.name}: ${l.stations.length} names, ${l.coordinates.length} vertices, ${(drawn / 1000).toFixed(1)} km`);
+  }
+
+  const skipped = lines.flatMap((l) => l.stationsNotDrawn || []);
+  if (skipped.length) ok(`documented but not drawn: ${skipped.join(', ')}`);
+  const withPins = JSON.parse(read('data/stations.json'));
+  const derived = withPins.filter((x) => x.positionSource !== 'published');
+  if (derived.length) fail(`${derived.length} station pin(s) still use a solved position: ${derived.map((x) => x.name).join(', ')}`);
+  else ok(`all ${withPins.length} station pins use published coordinates`);
+} catch (err) {
+  fail(`could not read the metro data: ${err.message}`);
+}
+
 if (process.env.DUMP) {
   const first = (cache.get('#list').innerHTML.match(/<li[\s\S]*?<\/li>/) || [''])[0];
   console.log('\n--- one list row ---\n' + first.trim());

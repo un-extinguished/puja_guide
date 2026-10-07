@@ -10,11 +10,11 @@
  * The API is never cached: a queue report from twenty minutes ago is not
  * information.
  */
-const VERSION = 'pujaguide-v6';
+const VERSION = 'pujaguide-v7';
 const SHELL = [
   '/',
-  '/style.css?v=8',
-  '/app.js?v=8',
+  '/style.css?v=9',
+  '/app.js?v=9',
   '/vendor/maplibre-gl.css?v=4.7.1',
   '/vendor/maplibre-gl.js?v=4.7.1',
   '/data/pandals.json',

@@ -1,5 +1,5 @@
 {
-  "builtAt": "2026-10-07T17:28:58.001Z",
+  "builtAt": "2026-10-07T17:41:14.916Z",
   "pandalCount": 283,
   "communityCount": 3,
   "stationCount": 35,
@@ -15,9 +15,9 @@
     "area / areaName",
     "neighbourhoodInferred",
     "position.verified / position.approximate",
-    "stations[].lat / lon (estimated by multi-lateration from published walk distances)",
+    "stations[].lat / lon (published coordinates; a fallback solve by multi-lateration only where none is published)",
     "routes[] (generated from coordinates; distances are estimates)",
-    "lines[].coordinates (traced through station positions, not surveyed)",
+    "lines[].coordinates (drawn through published station coordinates, not surveyed)",
     "photo.fromPinMeters / photo.corroborates (photograph GPS measured against our pin)",
     "nearestMetro.estimated (true where a pandal had no published walk)"
   ]

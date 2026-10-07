@@ -585,7 +585,7 @@ function renderLineLegend() {
   el.hidden = false;
   el.innerHTML = `<strong>Metro lines</strong>
     ${state.lines.map((l) => `<span><i class="swatch" style="background:${esc(l.colour)}"></i>${esc(l.name)}<span class="faint">&nbsp;${esc(l.route)}</span></span>`).join('')}
-    <span class="faint">Alignment traced through station positions, not surveyed.</span>`;
+    <span class="faint">Alignment joins published station coordinates; not a survey.</span>`;
 }
 
 function locate() {
@@ -1255,15 +1255,20 @@ PAGES.metroIndex = () => {
       ${state.lines.map((l) => {
         const list = l.stations.map((st) => {
           const s = state.stations.find((x) => x.name === st.name);
-          return s ? `<li><a href="/metro/${s.slug}">${esc(st.name)}</a> <span class="faint">${s.pandalCount} pandal${s.pandalCount === 1 ? '' : 's'}</span></li>` : '';
-        }).filter(Boolean).join('');
+          const name = esc(st.name);
+          const body = s
+            ? `<a href="/metro/${s.slug}">${name}</a> <span class="faint">${s.pandalCount} pandal${s.pandalCount === 1 ? '' : 's'}</span>`
+            : `${name} <span class="faint">no mapped pandal</span>`;
+          const gap = st.mapped === false ? ' <span class="faint">· not drawn</span>' : '';
+          return `<li>${body}${gap}</li>`;
+        }).join('');
         return `<h3><i class="swatch" style="background:${esc(l.colour)}"></i> ${esc(l.name)} <span class="faint">· ${esc(l.route)}</span></h3>
           ${list ? `<ul class="stationlist">${list}</ul>` : '<p class="faint">No mapped pandal names a station on this line.</p>'}`;
       }).join('')}
-      <p class="fine">A station is listed under every line it is on. The alignment drawn on the map is traced through station positions, not surveyed.</p>` : ''}
+      <p class="fine">A station is listed under every line it is on. The alignment drawn on the map joins published station coordinates, so it is an approximation of the track, not a survey.${state.lines.some((l) => (l.stationsNotDrawn || []).length) ? ` One station, ${state.lines.flatMap((l) => l.stationsNotDrawn || []).join(', ')}, has no coordinate we trust and is not drawn.` : ''}</p>` : ''}
       <h2>Every station</h2>
       <table><thead><tr><th>Station</th><th>Pandals naming it</th><th>Closest</th></tr></thead><tbody>${rows}</tbody></table>
-      <p class="fine">Station positions on the map are estimated: each pandal publishes the walk to its station, and the station is placed so those walks fit best. Expect to be within a couple of hundred metres — good enough to see which side of the tracks the puja is on.</p>`,
+      <p class="fine">Station pins sit on published station coordinates; the walk against each pandal is the distance the dataset publishes. The two agree to a median of about ${Math.round(state.stations.map((x) => x.fitMeters).filter((x) => x != null).sort((a, b) => a - b)[Math.floor(state.stations.length / 2)] || 0)} m, which is the honest size of the error you should expect.</p>`,
   };
 };
 
@@ -1281,10 +1286,10 @@ PAGES.metro = (view) => {
       ${(s.lines || []).length ? `<p>${(s.lines || []).map((slug) => {
         const l = state.lineBySlug.get(slug);
         return l ? `<span class="badge" style="border-color:${esc(l.colour)};color:${esc(l.colour)}">${esc(l.name)}</span> ${esc(l.route)}` : '';
-      }).join('<br>')}</p><p class="fine">Line alignment on the map is traced through station positions, not surveyed.</p>` : ''}
+      }).join('<br>')}</p><p class="fine">Line alignment on the map joins published station coordinates, not a survey.</p>` : ''}
       <p><button class="btn primary" type="button" id="metro-map">Show on the map</button></p>
       <table><thead><tr><th>#</th><th>Pandal</th><th>Para</th><th>Walk from the station</th><th>Nearest metro</th></tr></thead><tbody>${rows}</tbody></table>
-      <p class="fine">The station pin on the map is estimated from the published walks, not surveyed — the walks themselves are as published per pandal.</p>`,
+      <p class="fine">The pin is the station's published coordinate, not a survey; the walks are as published per pandal.</p>`,
     wire: () => {
       $('#metro-map').onclick = () => scopeToMap({ metro: s.name }, `${s.name} metro`);
     },
@@ -1402,7 +1407,7 @@ PAGES.about = () => {
       </tbody></table>
 
       <h2>Where the data comes from</h2>
-      <p>The base map and the walking directions are <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, rendered by <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> with <a href="https://openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> styles. The pandal catalogue is built from the open dataset that <a href="https://www.pujomap.com/data/LICENSE.txt" target="_blank" rel="noopener">pujomap.com publishes under ODbL</a> — names, zones, streets, coordinates and the nearest metro to each — rebuilt, de-duplicated and extended here. Walking routes are worked out from those coordinates.</p>
+      <p>The base map and the walking directions are <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>, rendered by <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a> with <a href="https://openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> styles. The pandal catalogue is built from the open dataset that <a href="https://www.pujomap.com/data/LICENSE.txt" target="_blank" rel="noopener">pujomap.com publishes under ODbL</a> — names, zones, streets, coordinates and the nearest metro to each — rebuilt, de-duplicated and extended here. Walking routes are worked out from those coordinates. Metro station positions and line alignments come from Wikipedia's list of Kolkata Metro stations, whose coordinates are OpenStreetMap and Wikidata (CC BY-SA / CC0); the pandal dataset never carried station coordinates.</p>
       <p>This site is not affiliated with pujomap.com; their dataset is reused under its licence, with credit, and their application code is not used or copied. See <a href="/about#credits">credits</a> below.</p>
 
       <h2 id="credits">Credits and licence</h2>
@@ -1410,12 +1415,14 @@ PAGES.about = () => {
         <li>Pandal data © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>, ODbL 1.0. Republished here under the same licence; the file is served at <a href="/data/pandals.json">/data/pandals.json</a> so anyone can take it onward.</li>
         <li>Upstream catalogue: pujomap.com, which publishes its pandal rows and states plainly which rows it cannot license onward. Those rows are not present here.</li>
         <li>Map tiles: OpenFreeMap and OpenMapTiles. Walking routes: the public OSRM foot router run by <a href="https://routing.openstreetmap.de/" target="_blank" rel="noopener">FOSSGIS</a>.</li>
+        <li>Metro station coordinates and line membership: Wikipedia's <em>List of Kolkata Metro stations</em> and the individual station articles, CC BY-SA 4.0, themselves sourced from OpenStreetMap and Wikidata.</li>
+        <li>Photographs: Wikimedia Commons, each under the licence printed on the card next to the photographer's name.</li>
       </ul>
 
       <h2>Principles</h2>
       <ul>
         <li><strong>No invented ratings.</strong> There are no stars here. The only crowd information is what visitors report, and it says so.</li>
-        <li><strong>No guesses presented as fact.</strong> Every card says how its pin was placed, and the station pins say that they are estimated from published walks.</li>
+        <li><strong>No guesses presented as fact.</strong> Every card says how its pin was placed; the metro lines say they join published station coordinates rather than a survey; every estimated walk says it is estimated.</li>
         <li><strong>Nothing that follows you.</strong> Browsing needs no account, and what you save stays in your browser.</li>
       </ul>
 
@@ -1480,7 +1487,7 @@ PAGES.press = () => ({
       <li>Free, no account, no advertising, no trackers</li>
     </ul>
     <h2>What makes it different</h2>
-    <p>Every card discloses how its pin was placed — matched to OpenStreetMap, placed at the para centre, or snapped to the street — so a reader can judge how precise it is. Queue reports come from visitors and fade after ninety minutes. Metro lines are traced through station positions rather than surveyed, and each page says which walk distances are estimated.</p>
+    <p>Every card discloses how its pin was placed — matched to OpenStreetMap, placed at the para centre, or snapped to the street — so a reader can judge how precise it is. Queue reports come from visitors and fade after ninety minutes. Metro lines join published station coordinates rather than a survey, and each page says which walk distances are estimated.</p>
     <h2>Screenshots</h2>
     <p>Open <a href="/">the map</a> and take your own, or ask and we will send a set. Data is ODbL, © OpenStreetMap contributors; reuse it with credit.</p>
     <h2>Contact</h2>
