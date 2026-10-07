@@ -1,0 +1,58 @@
+Data licence — Puja Guide pandal catalogue
+==========================================
+
+The data in this directory — pandals.json, stations.json, routes.json, meta.json
+and the source rows in raw/ — is derived from OpenStreetMap, and is offered
+under the Open Database Licence (ODbL) v1.0.
+
+    Data © OpenStreetMap contributors
+    Licence text   https://opendatacommons.org/licenses/odbl/1-0/
+    OSM copyright  https://www.openstreetmap.org/copyright
+
+Where the catalogue came from
+-----------------------------
+pujomap.com publishes its pandal rows under the ODbL at
+
+    https://www.pujomap.com/data/pandals.json
+
+stating in its own licence file that the rows it cannot sublicense are filtered
+out of that copy before it is served. Those rows are therefore not in this
+catalogue either. The rows that are published — names, zones, streets,
+coordinates, and the nearest metro with its walking distance — were taken from
+that copy and rebuilt here: normalised, de-duplicated, and extended with fields
+this project derives (slugs, area groupings, station positions, walking routes).
+
+What is derived, and how
+------------------------
+Every derived field is labelled as such in the output, so nobody has to guess
+which numbers are surveyed and which are computed:
+
+  stations[].lat / lon   Estimated. Each pandal publishes the walk to its
+                         nearest station, never the station's own position.
+                         The station is placed where the published walks fit
+                         best, assuming a straight line of walk / 1.28.
+                         `fitMeters` reports the typical error of that fit.
+  routes[]               Generated from the coordinates: a seed pandal, the
+                         stops nearest it, then a nearest-neighbour ordering.
+                         `walkMeters` per leg is straight-line x 1.28.
+  area / areaName        Derived from the published zone and latitude.
+  neighbourhoodInferred  Set true where upstream is silent and the para was
+                         taken from the nearest pandal that names one.
+  position.*             Restates upstream's own geocodeMethod disclosure.
+
+What is not here
+----------------
+Photographs. This build has none, and no page claims any. The upstream
+catalogue credits photographs from Wikimedia Commons per card; that is their
+work under its own licences and it is not copied here.
+
+Using this data
+---------------
+Credit "© OpenStreetMap contributors" wherever you show it. If you publish
+this data, or anything derived from it, offer it under the ODbL too. Section
+4.6 of the licence means that if you publish a map built from it you must also
+offer the data — this project does that by serving these files alongside the
+page, at /data/.
+
+The application code that presents this data is separate from the data and is
+licensed MIT; see the LICENSE file at the root of the project.

@@ -1,0 +1,12 @@
+# installed by npm (public/vendor IS committed: the app has no build step, so a
+# plain clone must work; `npm run vendor` refreshes it from node_modules)
+node_modules/
+
+# live queue reports: runtime state, never source
+data/crowd.json
+
+# the build output is committed on purpose (the app has no build step), but
+# meta.json changes on every rebuild — keep it, it is small
+*.log
+.DS_Store
+.env

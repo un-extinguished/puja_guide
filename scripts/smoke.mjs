@@ -1,0 +1,231 @@
+/**
+ * smoke.mjs — run the real public/app.js against a minimal DOM stub.
+ *
+ * There is no browser in CI, but the app's bugs are mostly of the kind that
+ * show up as text: a field the data does not have, a template printing
+ * "undefined", a page that throws halfway through. This harness loads the
+ * actual module, lets boot() run, fires the map's load handler, opens every
+ * page and fails if any page throws or prints a hole.
+ *
+ * Run: node scripts/smoke.mjs
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
+
+/* ------------------------------------------------------------- DOM stub */
+const cache = new Map();
+const element = (selector = 'el') => {
+  const el = {
+    selector, innerHTML: '', textContent: '', hidden: false, scrollTop: 0,
+    style: {}, dataset: {}, value: '', files: [],
+    classList: { add() {}, remove() {}, toggle() {}, contains: () => false },
+    setAttribute() {}, getAttribute: () => null, removeAttribute() {},
+    addEventListener() {}, appendChild() {}, insertAdjacentHTML() {}, focus() {}, click() {}, remove() {},
+    querySelector: () => element('child'), querySelectorAll: () => [],
+    closest: () => null,
+  };
+  return el;
+};
+const q = (selector) => {
+  if (!cache.has(selector)) cache.set(selector, element(selector));
+  return cache.get(selector);
+};
+const windowListeners = {};
+const mapHandlers = {};
+
+globalThis.document = {
+  querySelector: q,
+  querySelectorAll: () => [],
+  createElement: () => element('created'),
+  addEventListener() {},
+  body: element('body'),
+  title: '',
+};
+globalThis.window = {
+  addEventListener: (ev, cb) => { (windowListeners[ev] ||= []).push(cb); },
+  location: { pathname: '/', search: '', origin: 'http://localhost', href: 'http://localhost/' },
+  innerWidth: 1280,
+  matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
+  history: { pushState() {}, replaceState() {} },
+};
+globalThis.location = globalThis.window.location;
+globalThis.history = globalThis.window.history;
+Object.defineProperty(globalThis, 'navigator', {
+  configurable: true,
+  value: { onLine: true, serviceWorker: { register: () => Promise.resolve() } },
+});
+globalThis.localStorage = {
+  _d: new Map(),
+  getItem(k) { return this._d.has(k) ? this._d.get(k) : null; },
+  setItem(k, v) { this._d.set(k, String(v)); },
+  removeItem(k) { this._d.delete(k); },
+};
+globalThis.setInterval = () => 0;
+globalThis.clearInterval = () => {};
+globalThis.caches = { open: () => Promise.resolve({ add: () => Promise.resolve() }) };
+const calls = [];
+globalThis.fetch = async (url) => {
+  const u = String(url);
+  calls.push(u);
+  if (u.startsWith('/data/')) {
+    return { ok: true, json: async () => JSON.parse(read(u)) };
+  }
+  if (u.includes('/api/crowd/summary')) return { ok: true, json: async () => ({ summary: { 'bagbazar-sarbojanin': { level: 'busy', at: Date.now(), note: 'test', count: 1 } } }) };
+  if (u.includes('/api/crowd')) return { ok: true, status: 200, json: async () => ({ reports: [{ slug: 'bagbazar-sarbojanin', level: 'busy', at: Date.now() }] }) };
+  return { ok: false, status: 404, json: async () => ({}) };
+};
+globalThis.maplibregl = {
+  Map: class {
+    constructor() { this._sources = new Map(); }
+    on(ev, cb) { (mapHandlers[ev] ||= []).push(cb); }
+    addControl() {}
+    addSource(id, def) { this._sources.set(id, def); }
+    addLayer(def) { if (!def || !def.id) throw new Error('layer without id'); if (def.source && !this._sources.has(def.source)) throw new Error(`layer ${def.id} refers to missing source ${def.source}`); }
+    getSource(id) { return { setData() {} }; }
+    setFilter() {}
+    flyTo() {} fitBounds() {} easeTo() {}
+    getZoom() { return 12; }
+    getCanvas() { return { style: {} }; }
+  },
+  NavigationControl: class {}, ScaleControl: class {},
+  LngLatBounds: class { extend() {} },
+};
+
+/* ------------------------------------------------------------------ run */
+let failures = 0;
+const fail = (msg) => { failures++; console.log('  ✗ ' + msg); };
+const ok = (msg) => console.log('  ✓ ' + msg);
+
+console.log('loading public/app.js against the stub DOM…');
+await import(path.join(ROOT, 'public/app.js'));
+for (const cb of windowListeners.DOMContentLoaded || []) cb();
+await new Promise((r) => setTimeout(r, 200));
+ok(`boot() ran (${calls.length} fetches: ${[...new Set(calls)].join(', ')})`);
+
+for (const cb of mapHandlers.load || []) cb();
+ok('map load handler ran (sources and layers added)');
+
+const holes = (html) => {
+  const bad = [];
+  if (/undefined/.test(html)) bad.push('prints "undefined"');
+  if (/NaN/.test(html)) bad.push('prints "NaN"');
+  if (/\[object Object\]/.test(html)) bad.push('prints an object');
+  if (/href="\/metro\/"/.test(html)) bad.push('links to an empty metro page');
+  return bad;
+};
+
+const check = (label, selector) => {
+  const html = cache.get(selector)?.innerHTML || '';
+  if (!html.trim()) return fail(`${label}: empty (${selector})`);
+  const bad = holes(html);
+  if (bad.length) return fail(`${label}: ${bad.join(', ')}`);
+  ok(`${label}: ${html.length} chars`);
+};
+
+check('list panel', '#list');
+check('filter chips', '#chips');
+
+/* the router is what decides which page to draw, so drive that directly */
+const nav = async (url) => {
+  globalThis.window.location.pathname = url;
+  globalThis.window.location.search = '';
+  for (const cb of windowListeners.popstate || []) cb();
+  await new Promise((r) => setTimeout(r, 30));
+};
+const pageViews = [
+  ['every pandal', '/pandals'],
+  ['routes index', '/routes'],
+  ['route detail', `/route/${JSON.parse(read('data/routes.json'))[0].slug}`],
+  ['metro index', '/metro'],
+  ['metro detail', `/metro/${JSON.parse(read('data/stations.json'))[0].slug}`],
+  ['area detail', '/area/north-kolkata'],
+  ['guide', '/guide'],
+  ['live', '/live'],
+  ['about', '/about'],
+  ['legal', '/legal'],
+  ['contact', '/contact'],
+  ['press', '/press'],
+  ['missing', '/not-a-page'],
+];
+for (const [label, url] of pageViews) {
+  q('#page-inner').innerHTML = '';
+  try {
+    await nav(url);
+    check(label, '#page-inner');
+  } catch (err) {
+    fail(`${label} threw: ${err.message}`);
+  }
+}
+
+/* a pandal page and the plan drawer */
+q('#page-inner').innerHTML = '';
+try {
+  await nav('/p/bagbazar-sarbojanin');
+  check('pandal page + card', '#card');
+} catch (err) {
+  fail(`pandal page threw: ${err.message}`);
+}
+q('#drawer-body').innerHTML = '';
+try {
+  q('#drawer').hidden = true;                      // as it starts in the document
+  if (q('#plan-open').onclick) q('#plan-open').onclick();
+  check('plan drawer (empty state)', '#drawer-body');
+} catch (err) {
+  fail(`plan drawer threw: ${err.message}`);
+}
+
+/* ---------------------------------------------------------------- the data
+   The metro lines are drawn straight from these numbers, so check them here
+   rather than trusting the app to notice. A [lat, lon] slip puts the whole
+   network in the sea, which is exactly what happened once. */
+console.log('\nthe metro lines in data/lines.json');
+try {
+  const lines = JSON.parse(read('data/lines.json'));
+  const expected = { blue: 26, green: 12, purple: 7, orange: 9, yellow: 4 };
+  if (lines.length !== 5) fail(`expected 5 lines, found ${lines.length}`);
+  else ok(`5 lines: ${lines.map((l) => l.name.split(' ')[0]).join(', ')}`);
+
+  const all = lines.flatMap((l) => l.coordinates);
+  const wrongWayRound = all.filter((c) => !(c[0] > 88 && c[0] < 89 && c[1] > 22 && c[1] < 23));
+  if (wrongWayRound.length) fail(`${wrongWayRound.length} coordinate(s) are not [lon, lat] in Kolkata, e.g. ${JSON.stringify(wrongWayRound[0])}`);
+  else ok(`all ${all.length} vertices are [lon, lat] in the right part of Kolkata`);
+
+  for (const l of lines) {
+    const want = expected[l.slug];
+    if (l.stationCount !== want) fail(`${l.name}: ${l.stationCount} stations, expected ${want}`);
+    if (l.coordinates.length < 2) fail(`${l.name}: fewer than 2 vertices, nothing to draw`);
+    if (l.approximate !== true) fail(`${l.name} does not admit the alignment is approximate`);
+    // a polyline can never be shorter than the straight line between its ends
+    const m = (a, b) => {
+      const r = Math.PI / 180, dLat = (b[1] - a[1]) * r, dLon = (b[0] - a[0]) * r;
+      return 6371000 * Math.sqrt(dLat ** 2 + (Math.cos(a[1] * r) * dLon) ** 2);
+    };
+    const endToEnd = m(l.coordinates[0], l.coordinates[l.coordinates.length - 1]);
+    const drawn = l.coordinates.slice(1).reduce((sum, c, i) => sum + m(l.coordinates[i], c), 0);
+    if (drawn < endToEnd - 1) fail(`${l.name}: drawn length ${Math.round(drawn)} m is shorter than its own endpoints are apart`);
+    else if (drawn > 45000) fail(`${l.name}: drawn length ${Math.round(drawn)} m is implausibly long for a city metro line`);
+    else ok(`${l.name}: ${l.stations.length} names, ${l.coordinates.length} vertices, ${(drawn / 1000).toFixed(1)} km`);
+  }
+
+  const skipped = lines.flatMap((l) => l.stationsNotDrawn || []);
+  if (skipped.length) ok(`documented but not drawn: ${skipped.join(', ')}`);
+  const withPins = JSON.parse(read('data/stations.json'));
+  const derived = withPins.filter((x) => x.positionSource !== 'published');
+  if (derived.length) fail(`${derived.length} station pin(s) still use a solved position: ${derived.map((x) => x.name).join(', ')}`);
+  else ok(`all ${withPins.length} station pins use published coordinates`);
+} catch (err) {
+  fail(`could not read the metro data: ${err.message}`);
+}
+
+if (process.env.DUMP) {
+  const first = (cache.get('#list').innerHTML.match(/<li[\s\S]*?<\/li>/) || [''])[0];
+  console.log('\n--- one list row ---\n' + first.trim());
+  console.log('\n--- card ---\n' + cache.get('#card').innerHTML.slice(0, 1400));
+}
+
+console.log(failures ? `\n${failures} check(s) failed` : '\nall smoke checks passed');
+process.exit(failures ? 1 : 0);

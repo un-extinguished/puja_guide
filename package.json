@@ -1,0 +1,28 @@
+{
+  "name": "puja-guide",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kolkata Durga Puja pandal map \u2014 280 pandals, nearest metro, walking routes, live crowd reports.",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "build:data": "node scripts/build-data.mjs",
+    "smoke": "node scripts/smoke.mjs",
+    "postinstall": "node scripts/vendor-map.mjs",
+    "vendor": "node scripts/vendor-map.mjs",
+    "test:render": "node scripts/render-test.mjs",
+    "test": "node scripts/smoke.mjs && node scripts/render-test.mjs"
+  },
+  "dependencies": {
+    "maplibre-gl": "^4.7.1"
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "jsdom": "^30.1.2"
+  }
+}
