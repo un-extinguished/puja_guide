@@ -1,0 +1,31 @@
+{
+  "source": "Wikimedia Commons",
+  "licenceNote": "Each photograph is someone else's work, used under the licence shown. A pandal is rebuilt every year on a new theme, so a photograph never shows what is standing today. Where the photograph carries GPS coordinates, build-data.mjs measures them against our pin and the app prints the distance, so a photograph doubles as evidence about the pin.",
+  "photos": {
+    "chalta-bagan": { "file": "Chalta Bagan Durga Puja 2019.jpg", "artist": "Subhrajyoti07", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2019, "gps": [22.585388, 88.372183] },
+    "41-pally": { "file": "Haridevpur 41 Pally Durga Puja 2019.jpg", "artist": "Subhrajyoti07", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2019, "gps": [22.482811, 88.338523] },
+    "suruchi-sangha": { "file": "Suruchi Sangha Durga Puja 2019.jpg", "artist": "Subhrajyoti07", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2019, "gps": [22.509368, 88.334452] },
+    "chetla-agrani": { "file": "Chetla Agroni Club Durga Puja 2019.jpg", "artist": "Subhrajyoti07", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2019, "gps": [22.516422, 88.337032] },
+    "ultadanga-pallyshree": { "file": "DurgaPuja2018 - Pandal of Ultadanga Pallyshree in Kolkata 03.jpg", "artist": "Indrajit Das", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2018, "gps": [22.596, 88.384217] },
+    "hedua-park": { "file": "Durga Puja2019 - Durga Puja Pandal of Hedua Park in Kolkata 06.jpg", "artist": "Tarunsamanta", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2019, "gps": [22.588758, 88.369476] },
+    "kashi-bose-lane": { "file": "Durga Puja2019 - Durga Puja Pandal of Kashi Bose Lane in Kolkata 13.jpg", "artist": "Tarunsamanta", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2019, "gps": [22.590998, 88.368896] },
+    "hatibagan-sarbojanin": { "file": "Durga Puja2019 - Durga Puja Pandal of Hatibagan Sarbojanin in Kolkata 01.jpg", "artist": "Tarunsamanta", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2019, "gps": [22.594238, 88.372055] },
+    "jagat-mukherjee-park-sadharan-durgotsab": { "file": "Durga Puja2019 - Durga Puja Pandal of Jagat Mukherjee Park in Kolkata 09.jpg", "artist": "Tarunsamanta", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2019, "gps": [22.599669, 88.365997] },
+    "kumartuli-sarbojanin": { "file": "Durga Puja2019 - Durga Puja Pandal of Kumartoli Sarbojanin in Kolkata 16.jpg", "artist": "Tarunsamanta", "licence": "CC BY-SA 4.0", "licenceUrl": "https://creativecommons.org/licenses/by-sa/4.0/", "year": 2019, "gps": [22.601021, 88.36293] },
+    "singhi-park-sarbojanin": { "file": "Durga Puja Pandal - Singhi Park - Kolkata 2011-10-03 00659.jpg", "artist": "Biswarup Ganguly", "licence": "CC BY 3.0", "licenceUrl": "https://creativecommons.org/licenses/by/3.0/", "year": 2011 },
+    "25-palli": { "file": "Durga Puja Pandal - 25 Pally - Kolkata 2011-10-03 030258.JPG", "artist": "Biswarup Ganguly", "licence": "CC BY 3.0", "licenceUrl": "https://creativecommons.org/licenses/by/3.0/", "year": 2011 },
+    "74-palli": { "file": "Durga Puja Pandal - 74 Pally - Kolkata 2011-10-03 030268.JPG", "artist": "Biswarup Ganguly", "licence": "CC BY 3.0", "licenceUrl": "https://creativecommons.org/licenses/by/3.0/", "year": 2011 },
+    "bosepukur-sitala-mandir": { "file": "Durga Puja Pandal - Bosepukur Sitala Mandir - Kasba - Kolkata 2012-10-23 1154.JPG", "artist": "Biswarup Ganguly", "licence": "CC BY 3.0", "licenceUrl": "https://creativecommons.org/licenses/by/3.0/", "year": 2012 },
+    "bosepukur-talbagan": { "file": "Durga Puja Pandal - Bosepukur Talbagan - Kasba - Kolkata 2012-10-23 1181.JPG", "artist": "Biswarup Ganguly", "licence": "CC BY 3.0", "licenceUrl": "https://creativecommons.org/licenses/by/3.0/", "year": 2012 },
+    "park-circus": { "file": "Durga Puja Pandal - Park Circus Beniapukur - Kolkata 2012-10-23 1191.JPG", "artist": "Biswarup Ganguly", "licence": "CC BY 3.0", "licenceUrl": "https://creativecommons.org/licenses/by/3.0/", "year": 2012 },
+    "bagbazar-sarbojanin": { "file": "2014 Durga Puja Bagbazar Pandal, Kolkata.jpg", "artist": "Prithwish Basu", "licence": "CC BY 2.0", "licenceUrl": "https://creativecommons.org/licenses/by/2.0/", "year": 2014 },
+    "ekdalia-evergreen": { "file": "Durga Puja Pandal - Ekdalia Evergreen - Ekdalia Road - Kolkata 2014-10-02 8858.JPG", "artist": "Biswarup Ganguly", "licence": "CC BY 3.0", "licenceUrl": "https://creativecommons.org/licenses/by/3.0/", "year": 2014 }
+  },
+  "rejected": [
+    {
+      "slug": "ajeyo-sanghati",
+      "file": "Ajoy Sanhati Club Durga Puja 2019.jpg",
+      "reason": "the photograph's GPS is 1.8 km from this pin, so either the photograph is of another club or our pin is wrong. Not shown until that is settled on the ground."
+    }
+  ]
+}

@@ -164,6 +164,8 @@ let merged = 0;
 for (const r of rows) {
   const nr = norm(r.n);
   const hit = kept.find((k) => {
+    /* a row this project added is never a duplicate of an upstream row */
+    if (r.g === 'community-report' || k.g === 'community-report') return false;
     const kr = norm(k.n);
     const d = dist({ lat: r.la, lon: r.lo }, { lat: k.la, lon: k.lo });
     const nrNum = numbers(r.n), krNum = numbers(k.n);
@@ -241,12 +243,16 @@ const pandals = kept.map((p) => {
     /* "geocodeMethod" is upstream's disclosure of how the pin was placed —
        otu, "osm" means it matches a surveyed place; "geocoded",
        "neighbourhood-anchor" and "street-snapped" mean it is approximate. */
+    source: p.g === 'community-report' ? 'community' : 'catalogue',
     position: {
       method: p.g,
       verified: p.g === 'verified',
       approximate: !['verified', 'osm'].includes(p.g),
+      community: p.g === 'community-report',
     },
-    nearestMetro: {
+    /* a row added from a visitor report carries no published walk, so it is
+       left empty here and filled in below from the solved station positions */
+    nearestMetro: p.g === 'community-report' ? null : {
       name: p.m,
       nameBn: STATION_BN[p.m] || null,
       walkMeters: p.d,
@@ -284,16 +290,45 @@ function solveStation(pts) {
   return { lat: bestLat, lon: bestLon, rms: Math.sqrt(bestErr / pts.length) };
 }
 
+/* only the pandals with a published walk can place a station */
 const byStation = new Map();
 for (const p of pandals) {
+  if (!p.nearestMetro) continue;
   const k = p.nearestMetro.name;
-  if (!k) continue;
   if (!byStation.has(k)) byStation.set(k, []);
   byStation.get(k).push(p);
 }
 
-const stations = [...byStation.entries()].map(([name, list]) => {
+const solvedStations = new Map();
+for (const [name, list] of byStation) {
   const solved = solveStation(list.map((p) => ({ lat: p.lat, lon: p.lon, walkMeters: p.nearestMetro.walkMeters })));
+  solvedStations.set(name, { lat: solved.lat, lon: solved.lon, rms: solved.rms });
+}
+
+/* the pandals added from visitor reports have no published walk: they take the
+   nearest station position this build solved, and the walk is worked out from
+   that. Marked estimated, because it is. */
+let estimatedWalks = 0;
+for (const p of pandals) {
+  if (p.nearestMetro) continue;
+  let best = null, bd = Infinity;
+  for (const [name, pos] of solvedStations) {
+    const d = dist(p, pos);
+    if (d < bd) { bd = d; best = name; }
+  }
+  p.nearestMetro = {
+    name: best,
+    nameBn: STATION_BN[best] || null,
+    walkMeters: Math.round(bd * WALK_FACTOR),
+    estimated: true,
+  };
+  byStation.get(best).push(p);
+  estimatedWalks++;
+}
+console.log(`pandals without a published walk: ${estimatedWalks} (station and walk estimated from position)`);
+
+const stations = [...byStation.entries()].map(([name, list]) => {
+  const solved = solvedStations.get(name);
   const walks = list.map((p) => p.nearestMetro.walkMeters).sort((a, b) => a - b);
   return {
     slug: slugify(name),
@@ -308,11 +343,98 @@ const stations = [...byStation.entries()].map(([name, list]) => {
     pandals: list
       .slice()
       .sort((a, b) => a.nearestMetro.walkMeters - b.nearestMetro.walkMeters)
-      .map((p) => ({ slug: p.slug, walkMeters: p.nearestMetro.walkMeters })),
+      .map((p) => ({ slug: p.slug, walkMeters: p.nearestMetro.walkMeters, estimated: !!p.nearestMetro.estimated })),
   };
 }).sort((a, b) => b.pandalCount - a.pandalCount || a.name.localeCompare(b.name));
 
 console.log(`stations: ${stations.length}, median fit ${[...stations].sort((a, b) => a.fitMeters - b.fitMeters)[Math.floor(stations.length / 2)].fitMeters} m`);
+
+/* ----------------------------------------------------------- metro lines */
+/* The alignment is approximate and the app says so. It is traced through
+   station positions: where a station is one of those solved above from
+   published walks, the line runs through the same pin the map draws;
+   everywhere else it uses a published station location, good to a hundred
+   metres or so. Nothing here is a surveyed alignment, and nothing here should
+   be read as one. A line on a map reads as a survey, so it is said plainly in
+   the legend, on the metro pages and in data/README.md. */
+const METRO_LINES = [
+  { slug: 'blue', name: 'Blue Line', nameBn: 'নীল লাইন', colour: '#1f5fa8', route: 'Dakshineswar – Kavi Subhash', stations: [
+    ['Dakshineswar', 22.6548, 88.3576], ['Baranagar', 22.6445, 88.3721], ['Noapara', 22.6377, 88.3807],
+    ['Dum Dum'], ['Belgachia'], ['Shyambazar'], ['Shobhabazar Sutanuti'], ['Girish Park'],
+    ['Mahatma Gandhi Road'], ['Central'], ['Chandni Chowk'], ['Esplanade', 22.5645, 88.3517],
+    ['Park Street', 22.5545, 88.3513], ['Maidan'], ['Rabindra Sadan'], ['Netaji Bhavan'],
+    ['Jatin Das Park'], ['Kalighat'], ['Rabindra Sarobar'], ['Mahanayak Uttam Kumar'],
+    ['Netaji'], ['Masterda Surya Sen'], ['Gitanjali', 22.4817, 88.3328], ['Kavi Nazrul'],
+    ['Shahid Khudiram', 22.4682, 88.3296], ['Kavi Subhash', 22.463, 88.328],
+  ] },
+  { slug: 'green', name: 'Green Line', nameBn: 'সবুজ লাইন', colour: '#1f8a4c', route: 'Howrah Maidan – Salt Lake Sector V', stations: [
+    ['Howrah Maidan'], ['Howrah', 22.585, 88.3432], ['Mahakaran', 22.5709, 88.3486],
+    ['Esplanade', 22.5645, 88.3517], ['Sealdah'], ['Phoolbagan'], ['Salt Lake Stadium', 22.5737, 88.404],
+    ['Bengal Chemical'], ['City Centre'], ['Central Park'], ['Karunamoyee'], ['Salt Lake Sector V'],
+  ] },
+  { slug: 'purple', name: 'Purple Line', nameBn: 'বেগুনি লাইন', colour: '#7b3fa0', route: 'Joka – Majerhat', stations: [
+    ['Joka'], ['Thakurpukur', 22.467, 88.301], ['Sakher Bazar'], ['Behala Chowrasta'],
+    ['Behala Bazar'], ['Taratala'], ['Majerhat'],
+  ] },
+  { slug: 'orange', name: 'Orange Line', nameBn: 'কমলা লাইন', colour: '#d2691e', route: 'Kavi Subhash – Beleghata', stations: [
+    ['Kavi Subhash', 22.463, 88.328], ['Satyajit Ray'], ['Jyotirindra Nandi'], ['Kavi Sukanta'],
+    ['Hemanta Mukhopadhyay'], ['VIP Bazar'], ['Beleghata', 22.5643, 88.4028],
+  ] },
+  { slug: 'yellow', name: 'Yellow Line', nameBn: 'হলুদ লাইন', colour: '#c9a227', route: 'Noapara – Jai Hind (Airport)', stations: [
+    ['Noapara', 22.6377, 88.3807], ['Dum Dum'], ['Jessore Road'], ['Birati', 22.6418, 88.4285],
+    ['Michael Nagar', 22.6464, 88.4372], ['Jai Hind', 22.6516, 88.4467],
+  ] },
+];
+
+const lines = METRO_LINES.map((l) => {
+  const coordinates = [];
+  const stationList = l.stations.map(([name, lat, lon]) => {
+    const solved = solvedStations.get(name);
+    const pos = solved ? [solved.lon, solved.lat] : [lon, lat];
+    coordinates.push(pos);
+    return { name, nameBn: STATION_BN[name] || null, lon: pos[0], lat: pos[1], solved: !!solved };
+  });
+  return {
+    slug: l.slug, name: l.name, nameBn: l.nameBn, colour: l.colour, route: l.route,
+    approximate: true,
+    note: 'Alignment traced through station positions, not surveyed.',
+    stationCount: stationList.length,
+    stations: stationList,
+    coordinates,
+  };
+});
+for (const s of stations) {
+  s.lines = lines.filter((l) => l.stations.some((x) => x.name === s.name)).map((l) => l.slug);
+}
+console.log(`metro lines: ${lines.length} (${lines.map((l) => l.name.split(' ')[0]).join(', ')})`);
+
+/* --------------------------------------------------------- photographs */
+/* Photographs are other people's work, held in data/photos.json with the
+   licence they were published under. Where a photograph carries GPS
+   coordinates, they are measured against our pin here: a photograph taken
+   within a few metres of a pin is evidence about that pin, and one taken a
+   kilometre away is evidence of something else. The distance travels with the
+   record so the app can print it. */
+let photos = { photos: {}, rejected: [] };
+try { photos = JSON.parse(fs.readFileSync(path.join(OUT, 'photos.json'), 'utf8')); } catch {}
+let photoCount = 0;
+for (const [slug, ph] of Object.entries(photos.photos || {})) {
+  const p = pandals.find((x) => x.slug === slug);
+  if (!p) { console.warn(`  photograph for unknown pandal: ${slug}`); continue; }
+  let fromPinMeters = null;
+  if (Array.isArray(ph.gps) && ph.gps.length === 2) {
+    fromPinMeters = Math.round(dist(p, { lat: ph.gps[0], lon: ph.gps[1] }));
+  }
+  p.photo = {
+    file: ph.file, artist: ph.artist, licence: ph.licence, licenceUrl: ph.licenceUrl, year: ph.year,
+    page: `https://commons.wikimedia.org/wiki/File:${encodeURIComponent(ph.file.replace(/ /g, '_'))}`,
+    thumb: `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(ph.file.replace(/ /g, '_'))}?width=900`,
+    fromPinMeters,
+    corroborates: fromPinMeters == null ? null : fromPinMeters <= 500,
+  };
+  photoCount++;
+}
+console.log(`photographs: ${photoCount} attached, ${(photos.rejected || []).length} rejected`);
 
 /* ---------------------------------------------------------------- routes */
 /* A route is an evening that works: stand at a well-known puja, take the
@@ -391,8 +513,11 @@ console.log(`routes: ${routes.length}`);
 const meta = {
   builtAt: new Date().toISOString(),
   pandalCount: pandals.length,
+  communityCount: pandals.filter((p) => p.source === 'community').length,
   stationCount: stations.length,
+  lineCount: lines.length,
   routeCount: routes.length,
+  photoCount: photoCount,
   upstreamRows: rows.length,
   mergedRows: merged,
   source: 'Reconstructed from the ODbL dataset published at https://www.pujomap.com/data/pandals.json',
@@ -404,12 +529,16 @@ const meta = {
     'position.verified / position.approximate',
     'stations[].lat / lon (estimated by multi-lateration from published walk distances)',
     'routes[] (generated from coordinates; distances are estimates)',
+    'lines[].coordinates (traced through station positions, not surveyed)',
+    'photo.fromPinMeters / photo.corroborates (photograph GPS measured against our pin)',
+    'nearestMetro.estimated (true where a pandal had no published walk)',
   ],
 };
 
 fs.writeFileSync(path.join(OUT, 'pandals.json'), JSON.stringify(pandals, null, 0) + '\n');
 fs.writeFileSync(path.join(OUT, 'stations.json'), JSON.stringify(stations, null, 0) + '\n');
 fs.writeFileSync(path.join(OUT, 'routes.json'), JSON.stringify(routes, null, 0) + '\n');
+fs.writeFileSync(path.join(OUT, 'lines.json'), JSON.stringify(lines, null, 0) + '\n');
 fs.writeFileSync(path.join(OUT, 'meta.json'), JSON.stringify(meta, null, 2) + '\n');
 
 const areas = [...new Set(pandals.map((p) => p.area))];

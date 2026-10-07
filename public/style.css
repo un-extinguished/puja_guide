@@ -251,3 +251,45 @@ details.more summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
 .map-note strong { display: block; margin-bottom: 2px; }
 .map-note p { margin: 0; font-size: 13px; color: var(--ink-2); line-height: 1.5; }
 @media (max-width: 900px) { .map-note { top: 60px; left: 8px; right: 8px; padding: 10px 12px; } }
+
+
+/* ------------------------------------------------- search suggestions */
+.suggest {
+  position: absolute; z-index: 60; top: calc(100% + 5px); left: 0; right: 0;
+  list-style: none; margin: 0; padding: 4px; max-height: min(60vh, 420px); overflow: auto;
+  background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+}
+.suggest-item {
+  display: flex; flex-direction: column; gap: 1px; width: 100%; text-align: left;
+  background: none; border: 0; font: inherit; color: inherit; cursor: pointer;
+  padding: 7px 9px; border-radius: 9px;
+}
+.suggest-item:hover, .suggest-item.active { background: var(--paper-2); }
+.suggest-label { font-size: 14px; }
+.suggest-meta { font-size: 11.5px; color: var(--ink-3); }
+@media (max-width: 900px) { .suggest { position: fixed; left: 8px; right: 8px; top: calc(var(--top) + 4px); } }
+
+/* ------------------------------------------- collapsible panel heading */
+.panel-toggle {
+  display: flex; align-items: center; gap: 7px; width: 100%; text-align: left;
+  font: inherit; font-size: 12.5px; color: var(--ink-2); cursor: pointer;
+  background: #fff; border: 1px solid var(--line); border-radius: 9px; padding: 5px 8px; margin-bottom: 8px;
+}
+.panel-toggle:hover { background: var(--paper-2); }
+.panel-toggle .chev { transition: transform .18s ease; display: inline-block; }
+.panel-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.panel-head.collapsed #panel-title-block,
+.panel-head.collapsed .panel-tools,
+.panel-head.collapsed #chips { display: none; }
+.panel-head.collapsed { padding-bottom: 6px; }
+
+/* -------------------------------------------------------- photographs */
+.photo { margin: 0; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: #fff; }
+.photo img { display: block; width: 100%; height: auto; max-height: 300px; object-fit: cover; background: var(--paper-2); }
+.photo figcaption { font-size: 11.5px; line-height: 1.5; color: var(--ink-3); padding: 7px 9px; }
+
+/* ------------------------------------------------------ metro lines */
+.swatch { display: inline-block; width: 15px; height: 4px; border-radius: 2px; vertical-align: middle; margin-right: 4px; }
+.stationlist { columns: 2; font-size: 14px; margin: 6px 0 14px; padding-left: 18px; }
+@media (max-width: 620px) { .stationlist { columns: 1; } }
+.map-legend .swatch { margin-right: 6px; }

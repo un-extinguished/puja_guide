@@ -48,6 +48,8 @@ globalThis.document = {
 globalThis.window = {
   addEventListener: (ev, cb) => { (windowListeners[ev] ||= []).push(cb); },
   location: { pathname: '/', search: '', origin: 'http://localhost', href: 'http://localhost/' },
+  innerWidth: 1280,
+  matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
   history: { pushState() {}, replaceState() {} },
 };
 globalThis.location = globalThis.window.location;

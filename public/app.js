@@ -12,10 +12,14 @@ const state = {
   pandals: [],
   stations: [],
   routes: [],
+  lines: [],
   meta: {},
   bySlug: new Map(),
   stationBySlug: new Map(),
   routeBySlug: new Map(),
+  lineBySlug: new Map(),
+  linesVisible: true,
+  suggestIndex: -1,
   crowd: {},
   q: '',
   sort: 'suggested',
@@ -76,9 +80,12 @@ function toast(msg, ms = 2600) {
 
 /* ----------------------------------------------------------------- load */
 async function boot() {
-  const [pandals, stations, routes, meta] = await Promise.all(
-    ['pandals', 'stations', 'routes', 'meta'].map((n) => fetch(`/data/${n}.json`).then((r) => r.json()))
+  const [pandals, stations, routes, lines, meta] = await Promise.all(
+    ['pandals', 'stations', 'routes', 'lines', 'meta'].map((n) =>
+      fetch(`/data/${n}.json`).then((r) => (r.ok ? r.json() : [])).catch(() => [])
+    )
   );
+  state.lines = Array.isArray(lines) ? lines : [];
   state.pandals = pandals.map((p) => ({ ...p, _search: searchText(p) }));
   state.stations = stations;
   state.routes = routes;
@@ -86,6 +93,7 @@ async function boot() {
   state.bySlug = new Map(state.pandals.map((p) => [p.slug, p]));
   state.stationBySlug = new Map(stations.map((s) => [s.slug, s]));
   state.routeBySlug = new Map(routes.map((r) => [r.slug, r]));
+  state.lineBySlug = new Map(state.lines.map((l) => [l.slug, l]));
   state.plan = readJSON('pujaguide.plan', []);
   state.realDistances = readJSON('pujaguide.realDistances', false) === true;
 
@@ -225,6 +233,16 @@ function buildMap() {
       paint: { 'line-color': '#1c4c7d', 'line-width': 3, 'line-dasharray': [1.4, 1.4] },
       layout: { 'line-cap': 'round' },
     });
+    map.addSource('metro-lines', { type: 'geojson', data: lineFeatures() });
+    map.addLayer({
+      id: 'metro-lines', type: 'line', source: 'metro-lines',
+      layout: { 'line-cap': 'round', 'line-join': 'round', visibility: state.linesVisible ? 'visible' : 'none' },
+      paint: {
+        'line-color': ['get', 'colour'],
+        'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 4.5],
+        'line-opacity': 0.72,
+      },
+    });
     map.addLayer({
       id: 'stations', type: 'circle', source: 'stations',
       paint: {
@@ -284,6 +302,7 @@ function buildMap() {
     }
 
     state.mapReady = true;
+    renderLineLegend();
     /* the map got there in the end: take back any "no tiles" warning */
     const note = $('.map-note');
     if (note) note.remove();
@@ -429,6 +448,10 @@ function showCard(p) {
       <div class="tagline">${esc([p.areaName, p.neighbourhood].filter(Boolean).join(' · '))}</div>
     </div>
     <div class="card-body">
+      ${p.photo ? `<figure class="photo">
+        <img src="${esc(p.photo.thumb)}" alt="${esc(p.name)}, ${p.photo.year}" loading="lazy" decoding="async" referrerpolicy="no-referrer">
+        <figcaption>${esc(p.photo.artist)} · ${p.photo.licenceUrl ? `<a href="${esc(p.photo.licenceUrl)}" target="_blank" rel="noopener">${esc(p.photo.licence)}</a>` : esc(p.photo.licence)} · ${p.photo.year} · <a href="${esc(p.photo.page)}" target="_blank" rel="noopener">Wikimedia Commons</a>${p.photo.fromPinMeters != null ? ` · photographed ${p.photo.fromPinMeters} m from this pin` : ''}. Each year the pandal is rebuilt on a new theme, so this is not what is standing now.</figcaption>
+      </figure>` : ''}
       <div class="crowd-row">
         ${LEVELS.map((l) => `<button class="crowd-btn ${l}" data-level="${l}" type="button">${LEVEL_LABEL[l]}</button>`).join('')}
       </div>
@@ -441,6 +464,7 @@ function showCard(p) {
         <dt>On</dt><dd>${esc(p.nearStreet || '—')}</dd>
         <dt>Area</dt><dd>${esc(p.areaName)}${p.neighbourhood ? ` · ${esc(p.neighbourhood)}${p.neighbourhoodInferred ? ' <span class="faint">(nearest para, inferred)</span>' : ''}` : ''}</dd>
         <dt>Position</dt><dd>${positionNote(p)}</dd>
+        ${p.nearestMetro.estimated ? '<dt>Walk</dt><dd><span class="badge">estimated</span> this puja was added from a visitor report, so the walk to the station is worked out from the position rather than published.</dd>' : ''}
         ${p.alsoKnownAs ? `<dt>Also known as</dt><dd>${esc(p.alsoKnownAs)}</dd>` : ''}
         ${p.formerName ? `<dt>Formerly</dt><dd>${esc(p.formerName)}</dd>` : ''}
       </dl>
@@ -501,6 +525,10 @@ function positionNote(p) {
   return `<span class="badge${p.position.verified ? ' verified' : ''}">${esc(label)}</span> ${map[m] ? esc(map[m]) : 'placed from the published puja list'}.`;
 }
 
+/* not every environment has matchMedia (some test runners do not) */
+const isNarrowScreen = () =>
+  typeof window.matchMedia === 'function' ? window.matchMedia('(max-width: 900px)').matches : window.innerWidth <= 900;
+
 const isBeen = (slug) => readJSON('pujaguide.been', []).includes(slug);
 function toggleBeen(slug) {
   const list = readJSON('pujaguide.been', []);
@@ -537,6 +565,28 @@ async function directionsTo(p) {
 }
 
 const setWalk = (fc) => state.mapReady && map().getSource('walk').setData(fc);
+
+/* ---------------------------------------------------------- metro lines */
+function lineFeatures() {
+  return {
+    type: 'FeatureCollection',
+    features: (state.lines || []).map((l) => ({
+      type: 'Feature',
+      geometry: { type: 'LineString', coordinates: l.coordinates },
+      properties: { slug: l.slug, name: l.name, colour: l.colour },
+    })),
+  };
+}
+
+function renderLineLegend() {
+  const el = $('#line-legend');
+  if (!el || !state.lines.length) return;
+  if (!state.linesVisible) { el.hidden = true; return; }
+  el.hidden = false;
+  el.innerHTML = `<strong>Metro lines</strong>
+    ${state.lines.map((l) => `<span><i class="swatch" style="background:${esc(l.colour)}"></i>${esc(l.name)}<span class="faint">&nbsp;${esc(l.route)}</span></span>`).join('')}
+    <span class="faint">Alignment traced through station positions, not surveyed.</span>`;
+}
 
 function locate() {
   return new Promise((resolve) => {
@@ -788,19 +838,34 @@ function wirePlan() {
 /* ------------------------------------------------------------- chrome */
 function wireChrome() {
   $('#search-form').onsubmit = (e) => e.preventDefault();
-  $('#q').oninput = (e) => {
-    state.q = e.target.value;
-    state.shown = 45;
-    $('#q-clear').hidden = !state.q;
-    render();
-  };
-  $('#q-clear').onclick = () => { $('#q').value = ''; state.q = ''; $('#q-clear').hidden = true; render(); };
+  $('#q-clear').onclick = () => { $('#q').value = ''; state.q = ''; $('#q-clear').hidden = true; render(); closeSuggest(); };
+  $('#q').addEventListener('input', (e) => { state.q = e.target.value; state.shown = 45; $('#q-clear').hidden = !state.q; render(); renderSuggest(); });
+  $('#q').addEventListener('focus', () => { if (state.q.trim().length > 1) renderSuggest(); });
+  $('#q').addEventListener('keydown', (e) => {
+    const items = $$('#suggest .suggest-item');
+    if (!items.length) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); state.suggestIndex = Math.min(state.suggestIndex + 1, items.length - 1); paintSuggestActive(); }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); state.suggestIndex = Math.max(state.suggestIndex - 1, 0); paintSuggestActive(); }
+    else if (e.key === 'Enter') {
+      if (state.suggestIndex >= 0) { e.preventDefault(); items[state.suggestIndex].click(); }
+      else closeSuggest();
+    } else if (e.key === 'Escape') closeSuggest();
+  });
+  document.addEventListener('click', (e) => { if (!e.target.closest('.search')) closeSuggest(); });
   $('#sort').onchange = (e) => { state.sort = e.target.value; render(); };
   $('#crowd-filter').onchange = (e) => { state.crowdFilter = e.target.value; render(); };
   $('#load-more').onclick = () => { state.shown += 60; render(); };
   $('#near-me').onclick = async () => {
     const ok = await locate();
     if (ok) { state.sort = 'distance'; $('#sort').value = 'distance'; render(); }
+  };
+  $('#map-lines').onclick = (e) => {
+    state.linesVisible = !state.linesVisible;
+    e.currentTarget.setAttribute('aria-pressed', String(state.linesVisible));
+    if (state.mapReady) {
+      map().setLayoutProperty('metro-lines', 'visibility', state.linesVisible ? 'visible' : 'none');
+    }
+    renderLineLegend();
   };
   $('#map-fit').onclick = () => { if (state.mapReady) fitFiltered(); else toast('There is no map to fit in this browser — the list is all ' + state.pandals.length + ' pandals.'); };
   $('#map-locate').onclick = async () => {
@@ -814,6 +879,21 @@ function wireChrome() {
     map().easeTo({ pitch: on ? 0 : 48, duration: 500 });
   };
   $('#menu-toggle').onclick = () => $('.mainnav').classList.toggle('open');
+
+  /* the title, the sorts and the chips are a lot of a phone screen, so on a
+     small one they start folded away, and the choice is remembered */
+  const head = $('.panel-head');
+  const toggle = $('#panel-toggle');
+  const setCollapsed = (on, remember = true) => {
+    head.classList.toggle('collapsed', on);
+    toggle.setAttribute('aria-expanded', String(!on));
+    const label = $('#panel-toggle-label');
+    if (label) label.textContent = on ? 'Show title, sort and filters' : 'Hide title, sort and filters';
+    if (remember) writeJSON('pujaguide.headCollapsed', on);
+  };
+  const stored = readJSON('pujaguide.headCollapsed', null);
+  setCollapsed(stored === null ? isNarrowScreen() : stored === true, false);
+  toggle.onclick = () => setCollapsed(!head.classList.contains('collapsed'));
 
   /* internal links navigate without a reload */
   document.addEventListener('click', (e) => {
@@ -831,6 +911,93 @@ function wireChrome() {
   });
 
   renderChips();
+}
+
+/* ----------------------------------------------------- search suggestions */
+/* Type two letters and the names come to you: pandals (English and Bengali),
+   streets, paras, areas and stations, in that order of confidence. */
+function suggestionsFor(q) {
+  const raw = q.trim();
+  const s = raw.toLowerCase();
+  if (s.length < 2) return [];
+  const rank = (text) => {
+    const t = text.toLowerCase();
+    return t.startsWith(s) ? 0 : t.includes(' ' + s) ? 1 : 2;
+  };
+  const out = [];
+  for (const p of state.pandals) {
+    const hit = p.name.toLowerCase().includes(s)
+      || (p.nameBn || '').includes(raw)
+      || (p.neighbourhood || '').toLowerCase().includes(s)
+      || (p.nearStreet || '').toLowerCase().includes(s);
+    if (!hit) continue;
+    out.push({
+      kind: 'pandal', slug: p.slug, label: p.name, bn: p.nameBn,
+      meta: `${p.neighbourhood || p.areaName} · ${p.nearestMetro.name} ${fmtM(p.nearestMetro.walkMeters)}`,
+      rank: rank(p.name),
+    });
+  }
+  for (const st of state.stations) {
+    if (!st.name.toLowerCase().includes(s)) continue;
+    out.push({ kind: 'metro', slug: st.slug, label: `${st.name} metro`, meta: `${st.pandalCount} pandals within walking range`, rank: rank(st.name) + 1 });
+  }
+  for (const [slug, name] of [...new Map(state.pandals.map((p) => [p.area, p.areaName])).entries()]) {
+    if (!name.toLowerCase().includes(s)) continue;
+    out.push({ kind: 'area', slug, label: name, meta: 'area', rank: rank(name) + 1 });
+  }
+  for (const nb of [...new Set(state.pandals.map((p) => p.neighbourhood).filter(Boolean))]) {
+    if (!nb.toLowerCase().includes(s)) continue;
+    const count = state.pandals.filter((p) => p.neighbourhood === nb).length;
+    out.push({ kind: 'neighbourhood', slug: nb, label: nb, meta: `para · ${count} pandal${count === 1 ? '' : 's'}`, rank: rank(nb) + 1 });
+  }
+  return out.sort((a, b) => a.rank - b.rank || a.label.localeCompare(b.label)).slice(0, 8);
+}
+
+function renderSuggest() {
+  const box = $('#suggest');
+  if (!box) return;
+  const items = suggestionsFor(state.q);
+  state.suggestIndex = -1;
+  if (!items.length) return closeSuggest();
+  box.innerHTML = items.map((it) => `<li><button type="button" class="suggest-item" data-kind="${it.kind}" data-slug="${esc(it.slug)}">
+      <span class="suggest-label">${esc(it.label)}${it.bn ? ` <span class="faint" lang="bn">${esc(it.bn)}</span>` : ''}</span>
+      <span class="suggest-meta">${esc(it.meta)}</span>
+    </button></li>`).join('');
+  box.hidden = false;
+  box.querySelectorAll('.suggest-item').forEach((b) => { b.onclick = () => chooseSuggestion(b.dataset.kind, b.dataset.slug); });
+}
+
+function paintSuggestActive() {
+  $$('#suggest .suggest-item').forEach((b, i) => {
+    const on = i === state.suggestIndex;
+    b.classList.toggle('active', on);
+    if (on && typeof b.scrollIntoView === 'function') b.scrollIntoView({ block: 'nearest' });
+  });
+}
+
+function closeSuggest() {
+  const box = $('#suggest');
+  if (box) { box.hidden = true; box.innerHTML = ''; }
+  state.suggestIndex = -1;
+}
+
+function chooseSuggestion(kind, slug) {
+  closeSuggest();
+  const input = $('#q');
+  if (kind === 'pandal') {
+    input.value = ''; state.q = ''; $('#q-clear').hidden = true;
+    render();
+    select(slug);
+  } else if (kind === 'metro') {
+    input.blur();
+    openPage({ name: 'metro', slug });
+  } else if (kind === 'area') {
+    state.area = slug; state.neighbourhood = null; state.shown = 45;
+    renderChips(); render(); if (state.mapReady) fitFiltered();
+  } else if (kind === 'neighbourhood') {
+    state.neighbourhood = slug; state.area = null; state.shown = 45;
+    renderChips(); render(); if (state.mapReady) fitFiltered();
+  }
 }
 
 function renderChips() {
@@ -1084,6 +1251,17 @@ PAGES.metroIndex = () => {
     html: `${backToMap}
       <h1>Pandals by metro station</h1>
       <p class="lede">On Puja nights the metro is the only thing in Kolkata still moving at a predictable speed. These are the ${state.stations.length} stations the mapped pandals name as their nearest, and what is within walking range of each.</p>
+      ${state.lines.length ? `<h2>By line</h2>
+      ${state.lines.map((l) => {
+        const list = l.stations.map((st) => {
+          const s = state.stations.find((x) => x.name === st.name);
+          return s ? `<li><a href="/metro/${s.slug}">${esc(st.name)}</a> <span class="faint">${s.pandalCount} pandal${s.pandalCount === 1 ? '' : 's'}</span></li>` : '';
+        }).filter(Boolean).join('');
+        return `<h3><i class="swatch" style="background:${esc(l.colour)}"></i> ${esc(l.name)} <span class="faint">· ${esc(l.route)}</span></h3>
+          ${list ? `<ul class="stationlist">${list}</ul>` : '<p class="faint">No mapped pandal names a station on this line.</p>'}`;
+      }).join('')}
+      <p class="fine">A station is listed under every line it is on. The alignment drawn on the map is traced through station positions, not surveyed.</p>` : ''}
+      <h2>Every station</h2>
       <table><thead><tr><th>Station</th><th>Pandals naming it</th><th>Closest</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="fine">Station positions on the map are estimated: each pandal publishes the walk to its station, and the station is placed so those walks fit best. Expect to be within a couple of hundred metres — good enough to see which side of the tracks the puja is on.</p>`,
   };
@@ -1100,6 +1278,10 @@ PAGES.metro = (view) => {
     html: `${backToMap}
       <h1>${esc(s.name)} metro</h1>
       <p class="lede">${s.pandalCount} mapped pandal${s.pandalCount === 1 ? '' : 's'} name this station as their nearest, the closest ${fmtM(s.nearestWalkMeters)} away. Sorted by the walk from the station.</p>
+      ${(s.lines || []).length ? `<p>${(s.lines || []).map((slug) => {
+        const l = state.lineBySlug.get(slug);
+        return l ? `<span class="badge" style="border-color:${esc(l.colour)};color:${esc(l.colour)}">${esc(l.name)}</span> ${esc(l.route)}` : '';
+      }).join('<br>')}</p><p class="fine">Line alignment on the map is traced through station positions, not surveyed.</p>` : ''}
       <p><button class="btn primary" type="button" id="metro-map">Show on the map</button></p>
       <table><thead><tr><th>#</th><th>Pandal</th><th>Para</th><th>Walk from the station</th><th>Nearest metro</th></tr></thead><tbody>${rows}</tbody></table>
       <p class="fine">The station pin on the map is estimated from the published walks, not surveyed — the walks themselves are as published per pandal.</p>`,
@@ -1211,6 +1393,8 @@ PAGES.about = () => {
       <table><tbody>
         <tr><th>Pandals mapped</th><td>${s.pandalCount}</td></tr>
         <tr><th>Metro stations with pandals in range</th><td>${s.stationCount}</td></tr>
+        <tr><th>Metro lines drawn</th><td>${s.lineCount}</td></tr>
+        <tr><th>Pandals with a freely licensed photograph</th><td>${s.photoCount}</td></tr>
         <tr><th>Walking routes</th><td>${s.routeCount}</td></tr>
         <tr><th>Neighbourhoods</th><td>${new Set(state.pandals.map((p) => p.neighbourhood).filter(Boolean)).size}</td></tr>
         <tr><th>Data built</th><td>${new Date(s.builtAt).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</td></tr>
@@ -1274,7 +1458,8 @@ PAGES.contact = () => ({
     <p>If you organise a puja, write with its location, this year's theme and the opening night. Information from organisers goes in ahead of anything derived from published lists, and there is no charge.</p>
 
     <h2>Contributing photographs</h2>
-    <p>Many pandals here have no photograph. This build does not display photographs yet — when it does, they will be credited to the photographer and the year, and only used with permission.</p>
+    <p>${state.meta.photoCount} pandals carry a photograph here, all of them freely licensed on Wikimedia Commons and credited on the card with the photographer, the licence and the year. Every pandal is rebuilt each year, so a photograph records a past edition, not what is standing now — the cards say so.</p>
+    <p>Most pandals still have no photograph. If you have one you took yourself and are willing to license it for reuse (CC BY, CC BY-SA or CC0), send it and we will add it with your name. Do not send other people's pictures.</p>
 
     <h2>Press</h2>
     <p>See the <a href="/press">press page</a> for a description and the key numbers.</p>`,
@@ -1289,11 +1474,13 @@ PAGES.press = () => ({
     <ul>
       <li>${state.meta.pandalCount} pandals mapped across Kolkata and Howrah</li>
       <li>${state.meta.stationCount} metro stations with pandals in walking range</li>
+      <li>${state.meta.lineCount} metro lines drawn between ${state.meta.stationCount} stations, so you can see which pujas sit on one line</li>
       <li>${state.meta.routeCount} walking routes, each with leg-by-leg distances</li>
+      <li>${state.meta.photoCount} pandals with a freely licensed photograph on their card</li>
       <li>Free, no account, no advertising, no trackers</li>
     </ul>
     <h2>What makes it different</h2>
-    <p>Every card discloses how its pin was placed — matched to OpenStreetMap, placed at the para centre, or snapped to the street — so a reader can judge how precise it is. Queue reports come from visitors and fade after ninety minutes.</p>
+    <p>Every card discloses how its pin was placed — matched to OpenStreetMap, placed at the para centre, or snapped to the street — so a reader can judge how precise it is. Queue reports come from visitors and fade after ninety minutes. Metro lines are traced through station positions rather than surveyed, and each page says which walk distances are estimated.</p>
     <h2>Screenshots</h2>
     <p>Open <a href="/">the map</a> and take your own, or ask and we will send a set. Data is ODbL, © OpenStreetMap contributors; reuse it with credit.</p>
     <h2>Contact</h2>
