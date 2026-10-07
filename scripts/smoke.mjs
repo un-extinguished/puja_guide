@@ -221,6 +221,32 @@ try {
   fail(`could not read the metro data: ${err.message}`);
 }
 
+/* ------------------------------------------------------------------ README
+   Every number the README prints is a number the data knows. It said 280
+   pandals for a week after the count moved to 283, which is the same stale-copy
+   bug the about page had. */
+console.log('\nthe README agrees with the data');
+try {
+  const meta = JSON.parse(read('data/meta.json'));
+  const lines = JSON.parse(read('data/lines.json'));
+  /* line wrapping is a presentation detail, not a mismatch */
+  const md = read('README.md').replace(/\s+/g, ' ');
+  const wants = [
+    [`**${meta.pandalCount} pandals**`, 'the pandal count'],
+    [`${meta.routeCount} walking routes`, 'the route count'],
+    [`${meta.photoCount} pandals carry a freely licensed photograph`, 'the photograph count'],
+    ...lines.map((l) => [`${l.name} ${l.stationCount}`, `the ${l.name} station count`]),
+  ];
+  for (const [needle, what] of wants) {
+    if (md.includes(needle)) ok(`README states ${what} ("${needle}")`);
+    else fail(`README does not state ${what} — expected to find "${needle}"`);
+  }
+  const stale = [...md.matchAll(/\*\*(\d+) pandals?\*\*/g)].map((m) => Number(m[1])).filter((n) => n !== meta.pandalCount);
+  if (stale.length) fail(`README still advertises ${stale.join(', ')} pandals, the data says ${meta.pandalCount}`);
+} catch (err) {
+  fail(`could not check the README: ${err.message}`);
+}
+
 if (process.env.DUMP) {
   const first = (cache.get('#list').innerHTML.match(/<li[\s\S]*?<\/li>/) || [''])[0];
   console.log('\n--- one list row ---\n' + first.trim());
