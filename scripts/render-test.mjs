@@ -101,6 +101,13 @@ async function render({ maplibre, label }) {
     count: d.querySelector('#count')?.textContent || '',
     chips: d.querySelectorAll('#chips .chip').length,
     mapNote: d.querySelector('.map-note p')?.textContent || '',
+    drawer: {
+      hidden: d.querySelector('#drawer')?.hasAttribute('hidden') === true,
+      body: (d.querySelector('#drawer-body')?.innerHTML || '').length,
+    },
+    cardHidden: d.querySelector('#card')?.hasAttribute('hidden') === true,
+    pageHidden: d.querySelector('#page')?.hasAttribute('hidden') === true,
+    legendHidden: d.querySelector('#map-legend')?.hasAttribute('hidden') === true,
     realErrors: errors.filter((e) => !/map failed to start/.test(e)),
   };
   window.close();
@@ -135,6 +142,26 @@ console.log('\nthe page when the map library never loads (/vendor missing, block
   expect(r.items > 40, `${r.items} pandals still listed`);
   expect(r.chips >= 5, `${r.chips} filter chips`);
   expect(/did not load/.test(r.mapNote), 'the map area explains itself');
+  expect(r.realErrors.length === 0, r.realErrors.length ? 'unexpected errors: ' + r.realErrors.join(' | ') : 'no unexpected errors');
+}
+
+console.log('\npanels that must stay shut until asked for');
+{
+  /* The bug this guards: the route drawer carries the `hidden` attribute, but
+     `.drawer { display: flex }` is an author rule and therefore beats the
+     browser's built-in [hidden] { display: none }. The drawer was simply
+     always on screen — open, empty, over the whole app — which is what a
+     visitor saw instead of the map. */
+  const css = read('public/style.css');
+  const guard = /\[hidden\]\s*\{[^}]*display:\s*none\s*!important/i.test(css);
+  expect(guard, 'style.css forces [hidden] to display:none !important (author display rules otherwise win)');
+
+  const r = await render({ maplibre: mapStub(), label: 'panels' });
+  expect(r.drawer.hidden, 'the route drawer starts hidden');
+  expect(r.drawer.body > 0, 'the route drawer has its explanation written into it (never a blank slab)');
+  expect(r.cardHidden, 'the pandal card starts hidden');
+  expect(r.pageHidden, 'the page overlay starts hidden');
+  expect(r.legendHidden, 'the crowd legend starts hidden');
   expect(r.realErrors.length === 0, r.realErrors.length ? 'unexpected errors: ' + r.realErrors.join(' | ') : 'no unexpected errors');
 }
 

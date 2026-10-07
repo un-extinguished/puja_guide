@@ -13,8 +13,8 @@
 const VERSION = 'pujaguide-v2';
 const SHELL = [
   '/',
-  '/style.css?v=3',
-  '/app.js?v=3',
+  '/style.css?v=4',
+  '/app.js?v=4',
   '/vendor/maplibre-gl.css?v=4.7.1',
   '/vendor/maplibre-gl.js?v=4.7.1',
   '/data/pandals.json',

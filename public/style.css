@@ -19,6 +19,14 @@
   font-synthesis-weight: none;
 }
 * { box-sizing: border-box; }
+
+/* The `hidden` attribute has to always win.
+   Several components set their own display — .drawer is flex, .map-legend is
+   grid — and an author rule beats the browser's built-in [hidden] { display:
+   none } no matter how the selectors are weighted. Without this line the
+   route drawer is simply always on screen: open, empty, over everything. */
+[hidden] { display: none !important; }
+
 html, body { height: 100%; }
 body {
   margin: 0;

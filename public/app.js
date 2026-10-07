@@ -574,7 +574,8 @@ async function refreshCrowd() {
     ]);
     state.crowd = summary.summary || {};
     state.recentReports = (recent.reports || []).slice().sort((a, b) => b.at - a.at);
-    $('#map-legend').hidden = false;
+    /* the legend only explains colours that are actually on the map */
+    $('#map-legend').hidden = Object.keys(state.crowd).length === 0;
     if (state.mapReady) map().getSource('pandals').setData(pandalFeatures(filtered()));
     render();
     if (state.active && !$('#card').hidden) showCard(state.bySlug.get(state.active));
@@ -778,6 +779,7 @@ async function saveOffline() {
 
 function wirePlan() {
   const open = () => { $('#drawer').hidden = false; renderPlan(); updatePlanCount(); };
+  renderPlan();   // so the drawer always has its explanation in it, never a blank slab
   $('#plan-open').onclick = () => ($('#drawer').hidden ? open() : ($('#drawer').hidden = false));
   $('#plan-close').onclick = () => { $('#drawer').hidden = true; updatePlanCount(); };
   updatePlanCount();
