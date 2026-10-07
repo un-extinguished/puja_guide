@@ -1,9 +1,12 @@
 # Puja Guide
 
-A Durga Puja pandal map for Kolkata: **280 pandals** on a 3D map, each with the
+A Durga Puja pandal map for Kolkata: **283 pandals** on a 3D map, each with the
 nearest metro and the walk from the station, the pujas within a few minutes on
 foot, 20 walking routes with leg-by-leg distances, and live queue reports that
-fade after ninety minutes.
+fade after ninety minutes. Five metro lines are drawn through **published**
+station coordinates - Blue Line 26 stations, Green Line 12, Purple Line 7,
+Orange Line 9, Yellow Line 4 - and 18 pandals carry a freely licensed
+photograph from Wikimedia Commons.
 
 No account, no ads, no trackers. Nothing you save leaves your browser except a
 queue report, which is stored without a name, an email or an IP address.
@@ -37,12 +40,12 @@ npm run build:data   # rebuild data/*.json from data/raw/*.jsonl
 
 | | |
 | --- | --- |
-| **Map** | MapLibre GL + OpenFreeMap tiles, pitched 3D, pandal pins coloured by live queue, station pins, walking routes drawn on the map. |
-| **List** | Search across names (English and Bengali), streets, paras and stations; sort by suggested, distance from you, walk from the puja's metro, name, area, para, or live queue; filter by area and by queue. |
-| **Pandal card** | Nearest metro and the walk to it, street, area, how the pin was placed and how precise that is, the pujas within a few minutes on foot, directions, share, "been there", and a correction mail. |
+| **Map** | MapLibre GL + OpenFreeMap tiles, pitched 3D, pandal pins coloured by live queue, station pins, the five metro lines, walking routes drawn on the map. |
+| **List** | Search that suggests names as you type, across names (English and Bengali), streets, paras and stations; sort by suggested, distance from you, walk from the puja's metro, name, area, para, or live queue; filter by area and by queue. |
+| **Pandal card** | Nearest metro and the walk to it, street, area, a photograph where one is freely licensed and credited, how the pin was placed and how precise that is, the pujas within a few minutes on foot, directions, share, "been there", and a correction mail. |
 | **Your route** | Pick pandals, get them in a walking order, see every leg, measure the legs on the real OSM foot router, share the route as a link, save it for offline use, print it. |
 | **Live queue** | Visitors report Easy / Busy / Very crowded at a pandal. Reports show on the map, on the card and on the live page, and expire after 90 minutes. |
-| **Pages** | Every pandal, by area, by metro station, by route, the guide, about, privacy and terms, contact, press. |
+| **Pages** | Every pandal, by area, by metro station and by line, by route, the guide, about, privacy and terms, contact, press. |
 | **Offline** | A service worker keeps the app shell, the data and a saved route on the device. |
 
 ## Offline and location
