@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Puja Guide — Kolkata Durga Puja pandal map</title>
+<meta name="description" content="280 Durga Puja pandals across Kolkata on a 3D map, each with its nearest metro, the walk from the station, the pujas within a few minutes of it, and live queue reports from visitors.">
+<link rel="canonical" href="/">
+<!-- Bump ?v= on app.js and style.css whenever they change: an older
+     service worker on a visitor's phone is cache-first, and a new URL is the
+     one thing that always reaches the network. -->
+<link rel="manifest" href="/manifest.webmanifest">
+<meta name="theme-color" content="#7b1f18">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="/icon.svg">
+<link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
+<link rel="stylesheet" href="/vendor/maplibre-gl.css?v=4.7.1">
+<link rel="stylesheet" href="/style.css?v=3">
+</head>
+<body>
+<a class="skip" href="#list">Skip to the pandal list</a>
+
+<header class="top">
+  <a class="brand" href="/">
+    <span class="brand-mark" aria-hidden="true">পূ</span>
+    <span class="brand-text">Puja&nbsp;Guide<small>Durga Puja 2026 · Kolkata</small></span>
+  </a>
+
+  <form class="search" role="search" id="search-form">
+    <label class="sr" for="q">Search pandals, streets, neighbourhoods</label>
+    <input id="q" name="q" type="search" placeholder="Search a pandal, street or para…" autocomplete="off" spellcheck="false">
+    <button type="button" id="q-clear" class="q-clear" hidden aria-label="Clear search">×</button>
+  </form>
+
+  <nav class="mainnav" aria-label="Sections">
+    <a href="/" data-nav="map">Map</a>
+    <a href="/pandals" data-nav="pandals">Pandals</a>
+    <a href="/area/north-kolkata" data-nav="area">Areas</a>
+    <a href="/metro" data-nav="metro">Metro</a>
+    <a href="/routes" data-nav="routes">Routes</a>
+    <a href="/guide" data-nav="guide">Guide</a>
+  </nav>
+
+  <div class="top-actions">
+    <button id="near-me" class="btn ghost" type="button" title="Sort the whole catalogue by how far you actually are">Near me</button>
+    <button id="plan-open" class="btn primary" type="button">Make a route <span id="plan-count" class="pill" hidden>0</span></button>
+    <button id="menu-toggle" class="btn ghost only-mobile" type="button" aria-label="Menu">≡</button>
+  </div>
+</header>
+
+<div id="offline-bar" class="offline-bar" hidden>You are offline. The map you already opened and your saved routes still work.</div>
+
+<main class="layout" id="layout">
+  <section class="panel" id="panel" aria-label="Pandals">
+    <div class="panel-head">
+      <div id="panel-title-block">
+        <p class="eyebrow" id="panel-eyebrow">All pandals</p>
+        <h1 id="panel-title">Kolkata Durga Puja pandal map</h1>
+      </div>
+      <div class="panel-tools">
+        <label class="field">
+          <span>Sort</span>
+          <select id="sort">
+            <option value="suggested">Suggested</option>
+            <option value="distance">Distance from me</option>
+            <option value="walk">Walk from its metro</option>
+            <option value="name">Name</option>
+            <option value="area">Area</option>
+            <option value="neighbourhood">Neighbourhood</option>
+            <option value="crowd">Live queue</option>
+          </select>
+        </label>
+        <label class="field">
+          <span>Queue</span>
+          <select id="crowd-filter">
+            <option value="">Any</option>
+            <option value="reported">Reported right now</option>
+            <option value="easy">Easy</option>
+            <option value="busy">Busy</option>
+            <option value="packed">Very crowded</option>
+          </select>
+        </label>
+      </div>
+      <div class="chips" id="chips" role="group" aria-label="Filters"></div>
+      <p class="count" id="count"></p>
+    </div>
+    <ol class="list" id="list"></ol>
+    <p class="list-empty" id="list-empty" hidden>Nothing matches that. Try a wider filter, or clear the search.</p>
+    <div class="panel-foot">
+      <button id="load-more" class="btn ghost" type="button" hidden>Show more</button>
+      <p class="fine">Positions are mapped by hand or matched to OpenStreetMap; each card says which. Walking distances are estimates unless you ask for directions.</p>
+    </div>
+  </section>
+
+  <section class="mapwrap" aria-label="Map">
+    <div id="map"></div>
+    <div class="map-overlay">
+      <div class="map-legend" id="map-legend" hidden>
+        <strong>Crowd</strong>
+        <span><i class="dot easy"></i>Easy</span>
+        <span><i class="dot busy"></i>Busy</span>
+        <span><i class="dot packed"></i>Very crowded</span>
+        <span class="faint">Reports fade after 90 minutes</span>
+      </div>
+      <div class="map-tools">
+        <button id="map-3d" class="btn ghost small" type="button" aria-pressed="true">3D</button>
+        <button id="map-fit" class="btn ghost small" type="button">Fit all</button>
+        <button id="map-locate" class="btn ghost small" type="button">My location</button>
+      </div>
+    </div>
+    <div class="map-credit">
+      Map / <a href="https://openfreemap.org/" target="_blank" rel="noopener">OpenFreeMap</a>
+      © <a href="https://openmaptiles.org/" target="_blank" rel="noopener">OpenMapTiles</a> ·
+      © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a> ·
+      <a href="/data/LICENSE.txt">Open data (ODbL)</a> ·
+      <a href="/about">About</a> · <a href="/contact">Contact</a> · <a href="/legal">Privacy &amp; terms</a>
+    </div>
+  </section>
+</main>
+
+<aside class="page" id="page" hidden aria-live="polite">
+  <div class="page-inner" id="page-inner"></div>
+</aside>
+
+<article class="card" id="card" hidden aria-label="Pandal details"></article>
+
+<aside class="drawer" id="drawer" hidden aria-label="Your route">
+  <header class="drawer-head">
+    <h2>Your route</h2>
+    <button id="plan-close" class="btn ghost small" type="button" aria-label="Close">×</button>
+  </header>
+  <div class="drawer-body" id="drawer-body"></div>
+</aside>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="/vendor/maplibre-gl.js?v=4.7.1"></script>
+<script type="module" src="/app.js?v=3"></script>
+</body>
+</html>

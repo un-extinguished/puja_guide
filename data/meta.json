@@ -1,0 +1,18 @@
+{
+  "builtAt": "2026-10-07T16:06:41.092Z",
+  "pandalCount": 280,
+  "stationCount": 35,
+  "routeCount": 20,
+  "upstreamRows": 290,
+  "mergedRows": 10,
+  "source": "Reconstructed from the ODbL dataset published at https://www.pujomap.com/data/pandals.json",
+  "licence": "ODbL 1.0 — © OpenStreetMap contributors",
+  "derivedFields": [
+    "slug",
+    "area / areaName",
+    "neighbourhoodInferred",
+    "position.verified / position.approximate",
+    "stations[].lat / lon (estimated by multi-lateration from published walk distances)",
+    "routes[] (generated from coordinates; distances are estimates)"
+  ]
+}
