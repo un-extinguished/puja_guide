@@ -9,7 +9,7 @@ npm run build:data
 | File | What it holds |
 | --- | --- |
 | `raw/chunk*.jsonl` | The source rows, one pandal per line, kept as transcribed. |
-| `pandals.json` | The catalogue the app serves: 280 pandals. |
+| `pandals.json` | The catalogue the app serves: 353 pandals. |
 | `stations.json` | The metro stations the pandals name, with estimated positions. |
 | `routes.json` | 20 walking routes, generated from the coordinates. |
 | `meta.json` | Counts and the derived-field list, shown on the About page. |
@@ -25,7 +25,7 @@ npm run build:data
    normalised names are equal within 600 m, or are ≥85% similar within 400 m,
    or ≥70% similar within 120 m — and never when the pally numbers differ,
    because *74 Pally* and *75 Pally* are two different pujas on one street.
-   This build merged 10 such rows into 280 pandals.
+   This build merged 10 such rows into 353 pandals.
 3. **Fill silent neighbourhoods** from the nearest pandal that names one, and
    mark the record `neighbourhoodInferred: true`.
 4. **Split areas** from the published zone and latitude.

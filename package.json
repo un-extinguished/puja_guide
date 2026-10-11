@@ -2,7 +2,7 @@
   "name": "puja-guide",
   "version": "1.0.0",
   "private": true,
-  "description": "Kolkata Durga Puja pandal map \u2014 280 pandals, nearest metro, walking routes, live crowd reports.",
+  "description": "Kolkata Durga Puja pandal map — 353 pandals, nearest metro, walking routes, live crowd reports.",
   "type": "module",
   "scripts": {
     "start": "node server.js",
