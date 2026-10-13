@@ -5,17 +5,15 @@
  * own styles or the map. The overlay is position:fixed, so it does not change
  * the layout underneath — when it fades, the map is already where it was.
  *
- * Colours: black ground, vermilion, marigold gold.
+ * Colours: pure black and white.
  * Motion: GPU-friendly transform/opacity only. Fully disabled under
  * prefers-reduced-motion.
  */
 
 #ph-preloader {
-  --ph-black: #0a0709;
-  --ph-red: #b8321f;
-  --ph-red-deep: #6d130c;
-  --ph-gold: #e8b73c;
-  --ph-gold-soft: #f7dd9a;
+  --ph-black: #050505;
+  --ph-white: #f5f5f5;
+  --ph-silver: #cfcfcf;
 
   position: fixed;
   inset: 0;
@@ -24,16 +22,16 @@
   place-items: center;
   overflow: hidden;
   background:
-    radial-gradient(115% 85% at 50% 6%, rgba(184, 50, 31, .38), transparent 60%),
-    radial-gradient(90% 75% at 50% 118%, rgba(109, 19, 12, .58), transparent 62%),
+    radial-gradient(115% 85% at 50% 6%, rgba(255, 255, 255, .07), transparent 60%),
+    radial-gradient(90% 75% at 50% 118%, rgba(255, 255, 255, .05), transparent 62%),
     var(--ph-black);
-  color: var(--ph-gold-soft);
+  color: var(--ph-silver);
   opacity: 1;
-  transition: opacity .65s ease, visibility .65s ease;
+  transition: opacity .9s cubic-bezier(.4, 0, .2, 1), visibility .9s ease;
   -webkit-tap-highlight-color: transparent;
   /* Safety net: if preloader.js never runs, the overlay still gets out of the
      way so it can never trap the visitor on a blank screen. */
-  animation: ph-safety 0s 3.5s forwards;
+  animation: ph-safety 0s 6.8s forwards;
 }
 
 /* faint mandala spokes behind everything */
@@ -42,7 +40,7 @@
   position: absolute;
   inset: 0;
   background: repeating-conic-gradient(from 0deg at 50% 42%,
-    rgba(232, 183, 60, .07) 0deg 1.1deg, transparent 1.1deg 15deg);
+    rgba(255, 255, 255, .055) 0deg 1.1deg, transparent 1.1deg 15deg);
   -webkit-mask-image: radial-gradient(58% 58% at 50% 42%, #000 0%, transparent 72%);
   mask-image: radial-gradient(58% 58% at 50% 42%, #000 0%, transparent 72%);
   opacity: .85;
@@ -95,20 +93,20 @@ html.ph-lock, html.ph-lock body { overflow: hidden; }
   display: grid;
   place-items: center;
   opacity: 0;
-  animation: ph-emblem-in 1.1s cubic-bezier(.2, .9, .25, 1) .35s forwards;
+  animation: ph-emblem-in 1.35s cubic-bezier(.2, .9, .25, 1) .5s forwards;
 }
 .ph-emblem-halo {
   position: absolute;
   inset: -22%;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 203, 96, .55), rgba(255, 203, 96, 0) 70%);
+  background: radial-gradient(circle, rgba(255, 255, 255, .6), rgba(255, 255, 255, 0) 70%);
   animation: ph-halo-pulse 3.6s ease-in-out 1.2s infinite;
 }
 .ph-emblem-svg { position: relative; width: 100%; height: 100%; display: block; }
 .ph-emblem .ph-halo { animation: ph-halo-pulse 3.6s ease-in-out 1.2s infinite; }
 
 .ph-trishul {
-  filter: drop-shadow(0 0 5px rgba(255, 203, 96, .85));
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, .85));
   animation: ph-glow 3.6s ease-in-out 1.2s infinite;
 }
 
@@ -118,8 +116,8 @@ html.ph-lock, html.ph-lock body { overflow: hidden; }
 }
 @keyframes ph-halo-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 @keyframes ph-glow {
-  0%, 100% { filter: drop-shadow(0 0 3px rgba(255, 203, 96, .6)); }
-  50%      { filter: drop-shadow(0 0 9px rgba(255, 203, 96, 1)); }
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(255, 255, 255, .6)); }
+  50%      { filter: drop-shadow(0 0 9px rgba(255, 255, 255, 1)); }
 }
 
 /* -------------------------------------------------------------- particles */
@@ -131,8 +129,8 @@ html.ph-lock, html.ph-lock body { overflow: hidden; }
   width: var(--ph-size, 3px);
   height: var(--ph-size, 3px);
   border-radius: 50%;
-  background: radial-gradient(circle, #fff3cf, var(--ph-gold) 55%, rgba(232, 183, 60, 0) 72%);
-  box-shadow: 0 0 6px rgba(232, 183, 60, .8);
+  background: radial-gradient(circle, #ffffff, rgba(235, 235, 235, .9) 55%, rgba(255, 255, 255, 0) 72%);
+  box-shadow: 0 0 6px rgba(255, 255, 255, .55);
   opacity: 0;
   animation: ph-rise var(--ph-dur, 5s) linear var(--ph-delay, 0s) infinite;
 }
@@ -152,13 +150,13 @@ html.ph-lock, html.ph-lock body { overflow: hidden; }
   padding: 0 1.4rem;
   margin-top: min(46vmin, 340px);
   opacity: 0;
-  animation: ph-brand-in 1s ease .5s forwards;
+  animation: ph-brand-in 1.25s ease .85s forwards;
 }
 .ph-intro-om {
   margin: 0;
   font-size: clamp(1.6rem, 6vw, 2.4rem);
-  color: var(--ph-gold);
-  text-shadow: 0 0 16px rgba(232, 183, 60, .7);
+  color: var(--ph-white);
+  text-shadow: 0 0 16px rgba(255, 255, 255, .55);
 }
 .ph-intro-title {
   margin: .12em 0 .1em;
@@ -166,11 +164,11 @@ html.ph-lock, html.ph-lock body { overflow: hidden; }
   font-weight: 800;
   letter-spacing: -.015em;
   line-height: 1.05;
-  color: #fff6e0;
-  text-shadow: 0 2px 24px rgba(184, 50, 31, .55);
+  color: #ffffff;
+  text-shadow: 0 2px 30px rgba(255, 255, 255, .18);
 }
 .ph-intro-title span {
-  background: linear-gradient(100deg, #ffe9b0, var(--ph-gold) 45%, #b8860b);
+  background: linear-gradient(100deg, #ffffff, #d9d9d9 45%, #9e9e9e);
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -180,7 +178,7 @@ html.ph-lock, html.ph-lock body { overflow: hidden; }
   font-size: clamp(.72rem, 2.6vw, .9rem);
   letter-spacing: .22em;
   text-transform: uppercase;
-  color: rgba(247, 221, 154, .78);
+  color: rgba(255, 255, 255, .72);
 }
 @keyframes ph-brand-in {
   from { opacity: 0; transform: translateY(14px); }
@@ -197,19 +195,19 @@ html.ph-lock, html.ph-lock body { overflow: hidden; }
   font-size: 13px;
   font-weight: 600;
   letter-spacing: .04em;
-  color: var(--ph-gold-soft);
-  background: rgba(10, 7, 9, .35);
-  border: 1px solid rgba(232, 183, 60, .55);
+  color: var(--ph-silver);
+  background: rgba(0, 0, 0, .35);
+  border: 1px solid rgba(255, 255, 255, .55);
   border-radius: 999px;
   padding: 9px 16px;
   cursor: pointer;
   backdrop-filter: blur(4px);
   transition: background .2s ease, border-color .2s ease, transform .2s ease;
   opacity: 0;
-  animation: ph-brand-in .8s ease .9s forwards;
+  animation: ph-brand-in .9s ease 1.15s forwards;
 }
-.ph-skip:hover { background: rgba(232, 183, 60, .14); border-color: var(--ph-gold); }
-.ph-skip:focus-visible { outline: 2px solid var(--ph-gold-soft); outline-offset: 2px; }
+.ph-skip:hover { background: rgba(255, 255, 255, .14); border-color: var(--ph-white); }
+.ph-skip:focus-visible { outline: 2px solid var(--ph-white); outline-offset: 2px; }
 .ph-skip:active { transform: scale(.97); }
 
 /* ------------------------------------------------------------- responsive */

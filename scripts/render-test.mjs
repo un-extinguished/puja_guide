@@ -374,32 +374,31 @@ console.log('\nthe intro preloader');
     url: 'http://localhost/', runScripts: 'outside-only', pretendToBeVisual: true,
   });
 
-  /* fresh session: it shows, locks scroll, rains gold, and Skip Intro clears it */
+  /* every load: it shows, locks scroll, rains white, and Skip Intro clears it */
   {
     const w = makeDom().window;
     w.eval(preloaderCode);
     const d = w.document;
     const particles = d.querySelectorAll('.ph-particle').length;
-    expect(!!d.getElementById('ph-preloader'), 'the overlay is present on a fresh session');
+    expect(!!d.getElementById('ph-preloader'), 'the overlay is present on load');
     expect(d.documentElement.classList.contains('ph-lock'), 'scroll is locked while the intro plays');
-    expect(particles > 0, `${particles} golden particles were generated`);
+    expect(particles > 0, `${particles} particles were generated`);
     expect(!!d.getElementById('ph-skip'), 'the Skip Intro button exists');
     expect(/PujaHop/.test(d.querySelector('.ph-intro-title')?.textContent || ''), 'the overlay is branded PujaHop Kolkata');
     d.getElementById('ph-skip').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
-    await new Promise((r) => setTimeout(r, 850));
+    await new Promise((r) => setTimeout(r, 1050));
     expect(!d.getElementById('ph-preloader'), 'Skip Intro removes the overlay');
     expect(!d.documentElement.classList.contains('ph-lock'), 'scroll is unlocked after skipping');
-    expect(w.sessionStorage.getItem('pujahop.introSeen') === '1', 'the session is marked as seen');
     w.close();
   }
 
-  /* a second view in the same session goes straight to the app */
+  /* a repeat view still plays it — the intro is no longer once-per-session */
   {
     const w = makeDom().window;
-    w.sessionStorage.setItem('pujahop.introSeen', '1');
+    w.sessionStorage.setItem('pujahop.introSeen', '1'); // a stale key must be ignored
     w.eval(preloaderCode);
-    expect(!w.document.getElementById('ph-preloader'), 'a second view in the same session skips the intro');
-    expect(!w.document.documentElement.classList.contains('ph-lock'), 'and never locks scroll');
+    expect(!!w.document.getElementById('ph-preloader'), 'a repeat view still shows the intro');
+    expect(w.document.documentElement.classList.contains('ph-lock'), 'and it locks scroll again');
     w.close();
   }
 
@@ -416,15 +415,15 @@ console.log('\nthe intro preloader');
     w.close();
   }
 
-  /* the ordinary hand-over respects a short minimum beat before revealing */
+  /* the ordinary hand-over holds the ~5s cinematic beat before revealing */
   {
     const w = makeDom().window;
     w.eval(preloaderCode);
     w.__pujahopReady = true;
     w.dispatchEvent(new w.Event('pujahop:reveal'));
     await new Promise((r) => setTimeout(r, 300));
-    expect(!!w.document.getElementById('ph-preloader'), 'the overlay holds for its cinematic beat before the app appears');
-    await new Promise((r) => setTimeout(r, 2600));
+    expect(!!w.document.getElementById('ph-preloader'), 'the overlay holds for its ~5s cinematic beat');
+    await new Promise((r) => setTimeout(r, 6000));
     expect(!w.document.getElementById('ph-preloader'), 'and then hands over to the map');
     w.close();
   }

@@ -1,4 +1,4 @@
-// Phase 6: emit chunk21-saltlake-dakshindari.jsonl (43 rows) and print them.
+// Phase 6: emit chunk21-saltlake-dakshindari.jsonl (42 rows) and print them.
 import fs from 'node:fs';
 
 // [n, s, la, lo, k]
@@ -48,7 +48,7 @@ const rows = [
   ['Salt Lake IB Block',            'IB Block, Salt Lake Sector III',     22.5720152, 88.4134611, null],
   ['Salt Lake JC Block',            'JC Block, Salt Lake Sector III',     22.5696125, 88.4131218, null],
   // ---- Dakshindari ----
-  ['Dakshindari Youths',            '17 No. Playground, Dakshindari Road, Ward 35, South Dumdum, Kolkata 700048', 22.6006, 88.404, 'Dakshindari Youth Durga Puja; Dakshindari Youths Durga Puja Committee'],
+  ['Dakshindari Youths',            '17 No. Playground, Dakshindari Road, Ward 35, South Dumdum, Kolkata 700048', 22.595455, 88.393977, 'Dakshindari Youth Durga Puja; Dakshindari Youths Durga Puja Committee'],
 ];
 
 const bname = {

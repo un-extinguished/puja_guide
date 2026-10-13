@@ -4,16 +4,17 @@
  * and can therefore show and dismiss the overlay without a flash of the app.
  *
  * Responsibilities, and nothing else:
- *   - play the intro once per browser session (sessionStorage);
+ *   - play the intro on every page load (no once-per-session gate, so a
+ *     refresh always shows it);
  *   - let the Skip Intro button dismiss it immediately;
  *   - hand over when the app says its content is ready (the `pujahop:reveal`
- *     event app.js dispatches after boot), or after the animation's own timer,
+ *     event app.js dispatches after boot) or after its ~5s cinematic beat,
  *     whichever comes first;
  *   - lock scroll while it is up, and remove itself completely when done so it
  *     can never cover the map, swallow a click or trap focus.
  *
  * It never touches the map or the app state, so if it fails the app is
- * unaffected — a CSS safety net clears the overlay after 3.5s regardless.
+ * unaffected — a CSS safety net clears the overlay after ~6.8s regardless.
  */
 (function () {
   'use strict';
@@ -31,25 +32,11 @@
   if (!root) return;
 
   var docEl = document.documentElement;
-  var KEY = 'pujahop.introSeen';
-
-  function seen() {
-    try { return sessionStorage.getItem(KEY) === '1'; } catch (e) { return false; }
-  }
-  function markSeen() {
-    try { sessionStorage.setItem(KEY, '1'); } catch (e) { /* private mode */ }
-  }
 
   var reduce = false;
   try {
     reduce = !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   } catch (e) { reduce = false; }
-
-  /* A visitor who has already seen it this session gets straight to the app. */
-  if (seen()) {
-    if (root.parentNode) root.parentNode.removeChild(root);
-    return;
-  }
 
   /* ------------------------------------------------------------- particles */
   var stage = root.querySelector('.ph-particles');
@@ -60,8 +47,8 @@
       p.className = 'ph-particle';
       p.style.left = (Math.random() * 100).toFixed(2) + '%';
       p.style.setProperty('--ph-size', (2 + Math.random() * 3).toFixed(1) + 'px');
-      p.style.setProperty('--ph-dur', (3.6 + Math.random() * 3.2).toFixed(2) + 's');
-      p.style.setProperty('--ph-delay', (Math.random() * 2.6).toFixed(2) + 's');
+      p.style.setProperty('--ph-dur', (4.6 + Math.random() * 3.4).toFixed(2) + 's');
+      p.style.setProperty('--ph-delay', (Math.random() * 4.4).toFixed(2) + 's');
       p.style.setProperty('--ph-drift', (Math.random() * 44 - 22).toFixed(0) + 'px');
       stage.appendChild(p);
     }
@@ -78,7 +65,6 @@
     if (done) return;
     done = true;
     clearTimers();
-    markSeen();
     docEl.classList.remove('ph-lock');
     root.classList.add('is-done');
     root.setAttribute('aria-hidden', 'true');
@@ -87,7 +73,7 @@
       if (root.parentNode) root.parentNode.removeChild(root);
     };
     if (instant || reduce) { finish(); return; }
-    timers.push(setTimeout(finish, 700));
+    timers.push(setTimeout(finish, 950));
   }
 
   docEl.classList.add('ph-lock');
@@ -103,10 +89,10 @@
   });
 
   /* app.js dispatches this once its data is loaded and the first render is on
-     screen. Reveal after a short minimum so the cinematic beat is seen, but
+     screen. Reveal after the ~5s cinematic beat so every reload shows it, but
      never hold the app hostage if the event never arrives. */
   var started = Date.now();
-  var minVisibleMs = reduce ? 0 : 2000;
+  var minVisibleMs = reduce ? 0 : 5000;
   function handOver() {
     var wait = Math.max(0, minVisibleMs - (Date.now() - started));
     timers.push(setTimeout(function () { reveal(false); }, wait));
@@ -115,6 +101,6 @@
   if (window.__pujahopReady) handOver();
 
   /* The animation's own end, and a hard cap in case the app is slow. */
-  timers.push(setTimeout(function () { reveal(false); }, reduce ? 300 : 2600));
-  timers.push(setTimeout(function () { reveal(false); }, reduce ? 800 : 3200));
+  timers.push(setTimeout(function () { reveal(false); }, reduce ? 300 : 5400));
+  timers.push(setTimeout(function () { reveal(false); }, reduce ? 800 : 5600));
 })();

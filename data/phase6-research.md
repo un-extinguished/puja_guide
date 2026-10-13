@@ -36,12 +36,19 @@ results (its FC Block pin 22.5800, 88.4095 matches thepujo's) but direct fetches
   hosts a 360° tour for Dakshindari Youth 2024/2025; official account @dakshindariyouths. kolkatadurgotsav
   says 26 years of celebration in 2026 (est. ~2000) and lists past themes (2024 *Singhabahini*, Tapan
   Sinha centenary).
-- **Pin used: 22.6006, 88.4040 (address-geocoded, approximate).** Derivation: OSM "Dakshindari Road"
-  runs through South Dumdum around 22.5999–22.6010, 88.4009–88.4047 (Sreebhumi Sporting Club, already
-  in the catalogue on the same road, sits at 22.600318, 88.40259); the pandal ground "17 No." is at the
-  north-east end of that stretch, ~1.8 km on foot from Belgachia metro — thepujo's own "Belgachia, about
-  1.8 km on foot" figure lands at the same spot (their page pin 22.592, 88.392 is ~1 km south-west and
-  contradicts their own 1.8 km claim; treated as a fallback and **not** used).
+- **Pin used: 22.595455, 88.393977 (published guide coordinate).** Source: Wikivoyage
+  *Kolkata/Northern Suburbs* → "Lake Town · Durga Puja venues", entry 10, "Dakshindari Youths, 17,
+  Dakshindari Rd." = 22.595455, 88.393977 (updated Nov 2025) — the **Ultadanga (south-west) end** of
+  Dakshindari Road, not the Sreebhumi end. Corroboration: thepujo's live page puts it "between Ultadanga
+  and Lake Town", 410 m from Ultadanga PS, ~700 m north-east of Bidhannagar Road station (OSM 22.59177,
+  88.39078) and ~1.8 km on foot from Belgachia — only the Ultadanga-end coordinate fits (~530 m
+  straight / ~700 m walk to Bidhannagar Road). thepujo's own map pin is labelled "neighbourhood
+  estimate" and is not used. **Corrected — supersedes the Phase-6 pin 22.6006, 88.4040, which sat at the
+  wrong (Sreebhumi) end of the road, ~1.2 km away.** The "Ultadanga vs South Dum Dum" labels are not a
+  contradiction: the road straddles the KMC / South Dum Dum boundary (kolkatadurgotsav says
+  "Ultadanga, 700048"; durgapujakolkata.in says "Ward 35, South Dumdum"); thepujo files it under the
+  Lake Town belt. Sreebhumi Sporting Club (22.600355, 88.40265) and Lake Town Adhibasi Brinda are
+  separate listings on the same Wikivoyage list, so there is no identity confusion.
 - Needs a human check: exact ground entrance on Dakshindari Road (flagged approximate).
 
 ### Other Dakshindari pandals
@@ -125,7 +132,7 @@ Pin provenance per row (details for the named eight above; the rest follow the s
 | Salt Lake IA Block | III | 22.572500, 88.413000 | 22.5725, 88.413 (clamped) | — | review — clampped pin kept |
 | Salt Lake IB Block | III | 22.572015, 88.413461 | 22.5725, 88.413 (clamped) | 22.57202, 88.41346 (house anchor) | OSM-anchored pin |
 | Salt Lake JC Block | III | 22.569613, 88.413122 | 22.5696125, 88.4131218 | — | review — stadium side |
-| Dakshindari Youths | — | 22.600600, 88.404000 | 22.592, 88.392 (fallback, rejected) | Dakshindari Rd OSM 22.6000–22.6010, 88.4009–88.4047 | address-geocoded |
+| Dakshindari Youths | — | 22.595455, 88.393977 | 22.592, 88.392 (fallback, rejected) | Wikivoyage Kolkata/Northern Suburbs "Lake Town" (Nov 2025), 17 Dakshindari Rd; thepujo Ultadanga-end anchors | published guide coordinate |
 
 **Coverage choice.** Salt Lake residential pujas follow block committees; the two 2026 guides that cover
 Salt Lake exhaustively are thepujo (44 pages incl. the existing four) and durgapujopandals (subset).
@@ -151,8 +158,8 @@ blocks (FC, AG, AH, BA, AL, HB…) are doubly corroborated.
 
 ## 5. Still needs verification (flagged, approximate)
 
-1. **Dakshindari Youths** — pin triangulated from the published address + Dakshindari Road OSM geometry +
-   Belgachia 1.8 km walk; confirm the ground entrance on site.
+1. **Dakshindari Youths** — pin is the published Wikivoyage "Lake Town" coordinate (17, Dakshindari Rd),
+   supported by thepujo's Ultadanga-end anchors; confirm the ground entrance on site.
 2. **IA / JC Block** — thepujo pins are coarse/clamped (IA shares the HA/IB placeholder); IB was corrected
    to the OSM house anchor, IA/JC kept as published. On-ground check for all three south-east-corner blocks.
 3. **CF Block** — no thepujo page; pin is the OSM block centroid (block exists and runs a puja per
@@ -176,8 +183,15 @@ blocks (FC, AG, AH, BA, AL, HB…) are doubly corroborated.
 - Regenerated: `data/pandals.json`, `stations.json`, `routes.json`, `meta.json`,
   `data/ref/pujamap-matches.json`, `data/pujamap-sync-report.md` (338 pandals, 313 without a pujamap
   counterpart), `data/vip-reconciliation-report.md`.
-- Ship-side: `public/app.js` `DATA_VERSION` → 20261013-odbl-3; `public/sw.js` VERSION → pujahop-v19
-  (asset `?v=18` → `?v=19`, data stamps updated to `-odbl-3`); README / data/README / package.json /
-  index.html meta / manifest counts updated 296 → 338.
+- Ship-side (Phase 6): `public/app.js` `DATA_VERSION` → 20261013-odbl-3; `public/sw.js` VERSION →
+  pujahop-v19 (asset `?v=18` → `?v=19`, data stamps updated to `-odbl-3`); README / data/README /
+  package.json / index.html meta / manifest counts updated 296 → 338.
+- **Post-Phase-6 follow-up (Dakshindari pin + intro preloader).** Dakshindari Youths pin corrected to
+  22.595455, 88.393977 — see §1. Intro preloader reworked: black & white only, plays on **every** page
+  load (the once-per-session gate is gone), ~5 s long (min beat 5000 ms, hard caps 5400/5600 ms, CSS
+  safety net 6.8 s). Ship-side bumped again: `DATA_VERSION` → 20261013-odbl-4; `sw.js` VERSION →
+  pujahop-v20; `app.js` `?v=20`, preloader assets `?v=2`. `scripts/render-test.mjs` preloader
+  expectations updated (a repeat view still shows it; it holds ~5 s). Counts unchanged: 338 pandals,
+  53 VIP records (54 list entries), 61 community.
 - Tests: `scripts/smoke.mjs` and `scripts/render-test.mjs` pass (render-test asserts the "338 pandals"
   count line and the 53/54 VIP invariants).

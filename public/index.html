@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link rel="stylesheet" href="/vendor/maplibre-gl.css?v=4.7.1">
 <link rel="stylesheet" href="/style.css?v=19">
-<link rel="stylesheet" href="/preloader.css?v=1">
+<link rel="stylesheet" href="/preloader.css?v=2">
 <!-- Pick up a saved theme before the first paint, so a returning visitor never
      sees a flash of the wrong background. Inline and classic on purpose: it
      has to run before anything renders, and it is the only inline script here. -->
@@ -28,18 +28,18 @@
 <noscript><style>#ph-preloader{display:none !important}</style></noscript>
 
 <!-- Cinematic intro preloader: pure CSS + inline SVG, no network, no build.
-     Hidden from the first paint onward only after it has played once per
-     session (see preloader.js). Scoped to #ph-preloader so it cannot leak
-     into the app's own styles or the map. -->
+     Black & white only, and it plays on every page load (see preloader.js), so
+     a refresh always shows it. Scoped to #ph-preloader so it cannot leak into
+     the app's own styles or the map. -->
 <div id="ph-preloader" class="ph-intro" role="dialog" aria-modal="true" aria-label="PujaHop Kolkata is loading">
   <div class="ph-intro-sky" aria-hidden="true">
     <div class="ph-alpana ph-alpana-a">
       <svg viewBox="0 0 400 400" aria-hidden="true">
         <defs>
           <linearGradient id="phGoldA" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#ffe9b0"/>
-            <stop offset=".5" stop-color="#e8b73c"/>
-            <stop offset="1" stop-color="#a86e12"/>
+            <stop offset="0" stop-color="#ffffff"/>
+            <stop offset=".5" stop-color="#d9d9d9"/>
+            <stop offset="1" stop-color="#8f8f8f"/>
           </linearGradient>
           <path id="phPetalA" d="M200 44 C214 92 214 134 200 158 C186 134 186 92 200 44 Z"/>
         </defs>
@@ -69,9 +69,9 @@
       <svg viewBox="0 0 400 400" aria-hidden="true">
         <defs>
           <linearGradient id="phGoldB" x1="1" y1="0" x2="0" y2="1">
-            <stop offset="0" stop-color="#ffe9b0"/>
-            <stop offset=".5" stop-color="#e8b73c"/>
-            <stop offset="1" stop-color="#a86e12"/>
+            <stop offset="0" stop-color="#ffffff"/>
+            <stop offset=".5" stop-color="#d9d9d9"/>
+            <stop offset="1" stop-color="#8f8f8f"/>
           </linearGradient>
           <path id="phPetalB" d="M200 60 C210 96 210 128 200 148 C190 128 190 96 200 60 Z"/>
         </defs>
@@ -95,13 +95,13 @@
       <svg class="ph-emblem-svg" viewBox="0 0 200 200" role="img" aria-label="Gleaming Durga emblem">
         <defs>
           <linearGradient id="phGoldC" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stop-color="#fff3cf"/>
-            <stop offset=".45" stop-color="#e8b73c"/>
-            <stop offset="1" stop-color="#a86e12"/>
+            <stop offset="0" stop-color="#ffffff"/>
+            <stop offset=".45" stop-color="#d9d9d9"/>
+            <stop offset="1" stop-color="#8f8f8f"/>
           </linearGradient>
           <radialGradient id="phGlowC" cx="50%" cy="46%" r="50%">
-            <stop offset="0" stop-color="rgba(255,203,96,.6)"/>
-            <stop offset="1" stop-color="rgba(255,203,96,0)"/>
+            <stop offset="0" stop-color="rgba(255,255,255,.55)"/>
+            <stop offset="1" stop-color="rgba(255,255,255,0)"/>
           </radialGradient>
           <path id="phPetalC" d="M100 24 C115 54 115 88 100 110 C85 88 85 54 100 24 Z"/>
         </defs>
@@ -302,8 +302,8 @@
 
 <div class="toast" id="toast" hidden></div>
 
-<script src="/preloader.js?v=1"></script>
+<script src="/preloader.js?v=2"></script>
 <script src="/vendor/maplibre-gl.js?v=4.7.1"></script>
-<script type="module" src="/app.js?v=19"></script>
+<script type="module" src="/app.js?v=20"></script>
 </body>
 </html>
