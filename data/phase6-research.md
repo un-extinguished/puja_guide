@@ -170,8 +170,10 @@ blocks (FC, AG, AH, BA, AL, HB…) are doubly corroborated.
 7. **Station-set gap (follow-up):** the app's Green Line set lacks **City Centre** and **Salt Lake
    Stadium** stations, so Sector I/III blocks near them resolve their nearest metro to Central Park /
    Bengal Chemical / Karunamoyee instead (verified: HA → Bengal Chemical 1.45 km, though the stadium
-   station would be ~680 m). Not fixed this phase because the station coordinates were not re-researched;
-   a follow-up can add both published stations and the affected walks re-solve automatically.
+   station would be ~680 m). **Partly resolved post-Phase 6:** City Centre is now a station pin — it
+   became a candidate once BD Block pointed at it (§6, BD Block follow-up), and 18 Sector I blocks
+   re-solved to it. OSM confirms our City Centre coordinates (22.587069, 88.407875) to ~4 m.
+   **Salt Lake Stadium is still missing** — add it and re-solve.
 
 ## 6. Build notes
 
@@ -193,5 +195,18 @@ blocks (FC, AG, AH, BA, AL, HB…) are doubly corroborated.
   pujahop-v20; `app.js` `?v=20`, preloader assets `?v=2`. `scripts/render-test.mjs` preloader
   expectations updated (a repeat view still shows it; it holds ~5 s). Counts unchanged: 338 pandals,
   53 VIP records (54 list entries), 61 community.
+- **Post-Phase-6 follow-up #2 (BD Block pin).** `BD Block Durga Puja` was geocoded ~1 km too far
+  south, landing on Salt Lake City Centre mall / EC Block (22.5862, 88.4088). Corrected to the **OSM
+  "BD Block" centroid, 22.5948023, 88.4080991** (way 155142853, `place=city_block`; the OSM
+  neighbourhood node and OSM BD Park agree within ~55 m, and the reference pujomap pin 22.59491,
+  88.40760 sits on BD Park). Corroboration: pujomap's own "pandals near" distances (AD 260 m, AE
+  430 m, BE 510 m, Sreebhumi 790 m) all match the corrected pin. Nearest metro corrected to **City
+  Centre, 860 m** — Central Park is 911 m from the corrected pin, and the old row's Central Park/847 m
+  was derived from the wrong coordinate. Pointing the row at City Centre added it to `stations.json`
+  (36 → 37) and re-solved **18 Sector I blocks** onto it, closing the gap in §5 item 7. Position method
+  stays `geocoded` (approximate — a block centroid, not the pandal gate). Counts unchanged: 338
+  pandals, 53 VIP records, 61 community, 290 upstream rows.
+- Ship-side (post-Phase-6 #2): `DATA_VERSION` → 20261013-odbl-5; `sw.js` VERSION → pujahop-v21;
+  `app.js` `?v=21`; data stamps updated to `-odbl-5`.
 - Tests: `scripts/smoke.mjs` and `scripts/render-test.mjs` pass (render-test asserts the "338 pandals"
-  count line and the 53/54 VIP invariants).
+  count line, the 53/54 VIP invariants, and the dynamic station count — now 37).
