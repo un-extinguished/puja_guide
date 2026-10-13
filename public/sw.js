@@ -10,19 +10,19 @@
  * The API is never cached: a queue report from twenty minutes ago is not
  * information.
  */
-const VERSION = 'pujahop-v18';
+const VERSION = 'pujahop-v19';
 const SHELL = [
   '/',
-  '/style.css?v=18',
-  '/app.js?v=18',
+  '/style.css?v=19',
+  '/app.js?v=19',
   '/preloader.css?v=1',
   '/preloader.js?v=1',
   '/vendor/maplibre-gl.css?v=4.7.1',
   '/vendor/maplibre-gl.js?v=4.7.1',
-  '/data/pandals.json?v=20261013-odbl-2',
-  '/data/stations.json?v=20261013-odbl-2',
-  '/data/routes.json?v=20261013-odbl-2',
-  '/data/lines.json?v=20261013-odbl-2', '/data/meta.json?v=20261013-odbl-2',
+  '/data/pandals.json?v=20261013-odbl-3',
+  '/data/stations.json?v=20261013-odbl-3',
+  '/data/routes.json?v=20261013-odbl-3',
+  '/data/lines.json?v=20261013-odbl-3', '/data/meta.json?v=20261013-odbl-3',
   '/data/photos.json',
   '/manifest.webmanifest',
   '/icon.svg',

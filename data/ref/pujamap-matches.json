@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-10-13T14:37:41.785Z",
+  "generatedAt": "2026-10-13T15:37:08.453Z",
   "catalogueCount": 74,
   "matches": [
     {
@@ -1288,13 +1288,13 @@
       "refAddress": "Nandan",
       "refLat": 22.562,
       "refLng": 88.394,
-      "slug": "nandana-yuba-sangha",
-      "name": "Nandana Yuba Sangha",
-      "score": 0.07741935483870967,
+      "slug": "salt-lake-labony-estate",
+      "name": "Salt Lake Labony Estate",
+      "score": 0.08108108108108109,
       "en": 0,
-      "bn": 0.25806451612903225,
+      "bn": 0.2702702702702703,
       "loc": 0,
-      "distanceToPujamapM": 9717,
+      "distanceToPujamapM": 2698,
       "confidence": "none",
       "note": null
     },

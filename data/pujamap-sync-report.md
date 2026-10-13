@@ -1,6 +1,6 @@
 # PujaHop Kolkata ↔ pujamap.com synchronisation report (Phase 2)
 
-Generated 2026-10-13T14:37:41.787Z. Source: https://pujamap.com/puja-pandel-list/ retrieved live via the WordPress REST API (page 239, embedded HTML widget) → data/ref/pujamap-catalogue.json.
+Generated 2026-10-13T15:37:08.455Z. Source: https://pujamap.com/puja-pandel-list/ retrieved live via the WordPress REST API (page 239, embedded HTML widget) → data/ref/pujamap-catalogue.json.
 
 ## 1. What the reference site actually exposes
 
@@ -24,7 +24,7 @@ Several names on the reference are garbled ("Belghoria 33 Palli" whose own Benga
 | New records added from pujamap.com | 0 (no unmatched entry has a verifiable precise location) |
 | New duplicate pairs consolidated | 0 (existing build-time folds unaffected) |
 
-The PujaHop catalogue (296 pandals) is a superset of the reference catalogue. Every pujamap.com entry with a confident identity already has a PujaHop record; none needed relocation and none needed renaming. Entries without a confident match are mostly obscure or garbled names whose reference coordinates are synthetic — **none were added**, matching the "flag rather than fabricate" rule. This report is therefore the synchronisation audit: what exists, what was corroborated, and what is still unverifiable from this source.
+The PujaHop catalogue (338 pandals) is a superset of the reference catalogue. Every pujamap.com entry with a confident identity already has a PujaHop record; none needed relocation and none needed renaming. Entries without a confident match are mostly obscure or garbled names whose reference coordinates are synthetic — **none were added**, matching the "flag rather than fabricate" rule. This report is therefore the synchronisation audit: what exists, what was corroborated, and what is still unverifiable from this source.
 
 ## 3. Match table (all 74)
 
@@ -103,7 +103,7 @@ confidence: **high/medium** = identity corroborated; **low** = weak signal (corr
 | 69 | More Bazar Sarbojanin | More Bazar | Ramlal Bazar Sarbojanin (`ramlal-bazar-sarbojanin`) | low | 7063 m | "More Bazar" and "Ramlal Bazar" are different markets; match is token-based only, not identity. weak signal — not relied on |
 | 70 | Wholesale Market Rajkalpa | Wholesale Market | EC Block (Salt Lake) (`ec-block-salt-lake`) | none | — | no reliable counterpart — not added |
 | 71 | Central Park Palli | Central Park | Jodhpur Park (`jodhpur-park`) | low | 7244 m | weak signal — not relied on |
-| 72 | Nandan vicinity Mim Paltel | Nandan | Nandana Yuba Sangha (`nandana-yuba-sangha`) | none | — | no reliable counterpart — not added |
+| 72 | Nandan vicinity Mim Paltel | Nandan | Salt Lake Labony Estate (`salt-lake-labony-estate`) | none | — | no reliable counterpart — not added |
 | 73 | Dum Dum Park Tarun Sangha | Dum Dum | Dum Dum Park Tarun Sangha (`dum-dum-park-tarun-sangha`) | high | 1193 m | exists; identity corroborated — coords kept (reference too coarse) |
 | 74 | Jagat Mukherjee Park | Jagat Mukherjee Park | Jagat Mukherjee Park Sadharan Durgotsab (`jagat-mukherjee-park-sadharan-durgotsab`) | medium | 4332 m | Identity match; pin confirmed in Phase 5 — the famous pandal is at 1 Jatindra Mohan Avenue, Bagbazar (est. 1936) and the OSM anchor is correct (the earlier Harish Mukherjee Road reading was rescinded). exists; identity corroborated — coords kept (reference too coarse) |
 
@@ -142,9 +142,9 @@ confidence: **high/medium** = identity corroborated; **low** = weak signal (corr
 
 ## 5. PujaHop records not present on pujamap.com (kept, not removed)
 
-Absence from the 74-entry reference catalogue is **not** grounds for removal — the PujaHop catalogue (296 pandals from a longer provenance) intentionally keeps records outside the reference. 271 of 296 PujaHop records have no confident counterpart on pujamap.com; representative examples by zone:
+Absence from the 74-entry reference catalogue is **not** grounds for removal — the PujaHop catalogue (338 pandals from a longer provenance) intentionally keeps records outside the reference. 313 of 338 PujaHop records have no confident counterpart on pujamap.com; representative examples by zone:
 
-- **North & Central Kolkata** (91 records; e.g. Sinthee Sarbojainin, Bangali Sangha, Cossipore Shakti Sangha, Paikpara 15 Palli, Chowddar Pally, …)
+- **North & Central Kolkata** (133 records; e.g. Sinthee Sarbojainin, Bangali Sangha, Cossipore Shakti Sangha, Paikpara 15 Palli, Chowddar Pally, …)
 - **South & South East Kolkata** (69 records; e.g. Adi Sammilita 57/58 Palli Sarbojanin Durgotsab, Chakraberia Sarbojanin, Gokhale Sporting, Agradut 76 Palli, Uday Sangha, …)
 - **Port Area** (9 records; e.g. Udayan, Nabarag, 26 Palli, Kabitirtha Saradotsav, Milan Sangha, …)
 - **South Suburban & South West (Jadavpur & Behala Division)** (127 records; e.g. C N Roy Rd Sarbojonin, Golmath Durgapuja Samity, Milan Tirtha, Rup Chand Mukherjee Sarbojonin, 68 Palli, …)

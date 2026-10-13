@@ -1,6 +1,6 @@
 # PujaHop Kolkata
 
-A Durga Puja pandal map for Kolkata: **296 pandals** on a 3D map, each with the
+A Durga Puja pandal map for Kolkata: **338 pandals** on a 3D map, each with the
 nearest metro and the walk from the station, the pujas within a few minutes on
 foot, 20 walking routes with leg-by-leg distances, and live queue reports that
 fade after ninety minutes. Five metro lines are drawn through **published**

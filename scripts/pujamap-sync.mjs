@@ -4,7 +4,7 @@
  *
  *  1. Loads the live pujamap.com catalogue (data/ref/pujamap-catalogue.json,
  *     74 entries pulled by scripts/fetch-pujamap.mjs).
- *  2. Fuzzy-matches every entry against the 296 PujaHop pandals
+ *  2. Fuzzy-matches every entry against the 338 PujaHop pandals
  *     (data/pandals.json) using English + Bengali + locality similarity, then
  *     applies a small, documented set of manual overrides where the reference
  *     is garbled but the identity is certain (and manual downgrades where a

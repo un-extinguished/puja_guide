@@ -1,6 +1,6 @@
 # VIP list (54) reconciliation against pujamap.com (Phase 4)
 
-Generated 2026-10-13T14:37:41.789Z. The 54 names are the owner's fixed VIP/pass list;
+Generated 2026-10-13T15:37:08.456Z. The 54 names are the owner's fixed VIP/pass list;
 data/vip-list.json is the source of truth for membership. For each name this report says whether
 pujamap.com supports the identity and/or the physical location:
 

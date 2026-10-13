@@ -10,7 +10,7 @@ npm run build:data
 | --- | --- |
 | `raw/chunk*.jsonl` | The source catalogue rows, one pandal per line. |
 | `archive/unverified-completeness-pally.jsonl` | 70 unverified placeholder rows (`Completeness Pally 101`–`170`), preserved for review and excluded from the active catalogue. |
-| `pandals.json` | The active catalogue the app serves: 296 pandals (53 of them are the owner's VIP pass pandals). |
+| `pandals.json` | The active catalogue the app serves: 338 pandals (53 of them are the owner's VIP pass pandals). |
 | `stations.json` | The metro stations the pandals name, with estimated positions. |
 | `routes.json` | 20 walking routes, generated from the coordinates. |
 | `meta.json` | Counts and the derived-field list, shown on the About page. |
@@ -31,7 +31,7 @@ npm run build:data
    beside *Kidderpore 25 Pally*, and *Paddapukur Youth Association* beside
    *Padmapukur Youth Assn.* — because a locality prefix or an abbreviated
    suffix hides them from the similarity heuristic.
-   This build merged 13 such rows into 296 pandals. The 70 sequential
+   This build merged 13 such rows into 338 pandals. The 70 sequential
    `Completeness Pally N` rows are unverified placeholders with invented
    names and locations; they remain in `archive/unverified-completeness-pally.jsonl`
    for review and are excluded from the active catalogue. The build fails if a

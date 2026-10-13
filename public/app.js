@@ -7,7 +7,7 @@
  */
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
-const DATA_VERSION = '20261013-odbl-2';
+const DATA_VERSION = '20261013-odbl-3';
 
 const state = {
   pandals: [],
