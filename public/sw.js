@@ -10,10 +10,10 @@
  * The API is never cached: a queue report from twenty minutes ago is not
  * information.
  */
-const VERSION = 'pujahop-v21';
+const VERSION = 'pujahop-v22';
 const SHELL = [
   '/',
-  '/style.css?v=19',
+  '/style.css?v=20',
   '/app.js?v=21',
   '/preloader.css?v=2',
   '/preloader.js?v=2',

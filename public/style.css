@@ -16,6 +16,7 @@
   --radius: 12px;
   --rail: 400px;
   --top: 60px;
+  --search-row: 50px;
   font-synthesis-weight: none;
 }
 * { box-sizing: border-box; }
@@ -46,12 +47,16 @@ h3 { font-size: 1rem; }
 
 /* ------------------------------------------------------------------ top */
 .top {
-  position: fixed; inset: 0 0 auto 0; height: var(--top); z-index: 40;
-  display: flex; align-items: center; gap: 14px; padding: 0 14px;
+  position: fixed; inset: 0 0 auto 0; height: var(--header-height); z-index: 40;
+  display: flex; flex-direction: column; padding: env(safe-area-inset-top) 14px 0;
   background: rgba(253, 251, 247, .92);
   backdrop-filter: saturate(1.4) blur(10px);
   border-bottom: 1px solid var(--line);
 }
+/* Row one of the header: brand, language/theme toggles, section nav, actions.
+   The search sits on its own row below (see .search) and is never flex-squeezed
+   out of a crowded header on a mid-width or maximised window. */
+.top-bar { display: flex; align-items: center; gap: 14px; height: var(--top); }
 .brand { display: flex; align-items: center; gap: 9px; text-decoration: none; color: inherit; flex: 0 0 auto; }
 .brand-mark {
   width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center;
@@ -60,9 +65,13 @@ h3 { font-size: 1rem; }
 }
 .brand-text { font-weight: 700; letter-spacing: -.01em; display: flex; flex-direction: column; line-height: 1.1; }
 .brand-text small { font-weight: 500; font-size: 10.5px; color: var(--ink-3); letter-spacing: .02em; text-transform: uppercase; }
-.search { position: relative; flex: 1 1 240px; max-width: 420px; }
+.search {
+  position: relative; display: flex; align-items: center; flex: 0 0 auto;
+  width: 100%; max-width: 760px; height: var(--search-row); margin: 0 auto;
+}
 .search input {
-  width: 100%; padding: 9px 30px 9px 12px; border: 1px solid var(--line);
+  flex: 1 1 auto; min-width: 0; width: 100%;
+  padding: 9px 30px 9px 12px; border: 1px solid var(--line);
   border-radius: 10px; background: #fff; font: inherit; color: inherit;
 }
 .search input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -455,10 +464,11 @@ body { overscroll-behavior: none; }
 .help-links a { display: block; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; text-decoration: none; }
 
 @media (max-width: 900px) {
-  :root { --top: 54px; }
-  .top { gap: 8px; padding-right: max(8px, env(safe-area-inset-right)); padding-left: max(8px, env(safe-area-inset-left)); }
+  :root { --top: 54px; --search-row: 46px; }
+  .top { padding-right: max(8px, env(safe-area-inset-right)); padding-left: max(8px, env(safe-area-inset-left)); }
+  .top-bar { gap: 8px; }
   .mainnav { display: none; }
-  .search { flex: 1 1 100px; min-width: 0; max-width: none; }
+  .search { max-width: none; }
   .search input { padding: 8px 28px 8px 9px; font-size: 13px; }
   #language-toggle, #theme-toggle { padding: 6px 8px; font-size: 12px; }
   .brand { gap: 6px; }

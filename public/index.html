@@ -17,7 +17,7 @@
 <link rel="apple-touch-icon" href="/icon.svg">
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link rel="stylesheet" href="/vendor/maplibre-gl.css?v=4.7.1">
-<link rel="stylesheet" href="/style.css?v=19">
+<link rel="stylesheet" href="/style.css?v=20">
 <link rel="stylesheet" href="/preloader.css?v=2">
 <!-- Pick up a saved theme before the first paint, so a returning visitor never
      sees a flash of the wrong background. Inline and classic on purpose: it
@@ -140,10 +140,31 @@
 <a class="skip" href="#list">Skip to the pandal list</a>
 
 <header class="top">
-  <a class="brand" href="/">
-    <span class="brand-mark" aria-hidden="true">ॐ</span>
-    <span class="brand-text">PujaHop&nbsp;Kolkata<small>Durga Puja 2026 · Kolkata</small></span>
-  </a>
+  <div class="top-bar">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">ॐ</span>
+      <span class="brand-text">PujaHop&nbsp;Kolkata<small>Durga Puja 2026 · Kolkata</small></span>
+    </a>
+
+    <button id="language-toggle" class="btn ghost small" type="button" aria-label="Switch interface language">বাংলা</button>
+    <button id="theme-toggle" class="btn ghost small" type="button" aria-pressed="false" aria-label="Switch to the dark theme" title="Switch between the bright and dark themes">Dark</button>
+
+    <nav class="mainnav" aria-label="Sections">
+      <a href="/" data-nav="map">Map</a>
+      <a href="/pandals" data-nav="pandals">Pandals</a>
+      <a href="/area/north-kolkata" data-nav="area">Areas</a>
+      <a href="/metro" data-nav="metro">Metro</a>
+      <a href="/routes" data-nav="routes">Routes</a>
+      <a href="/guide" data-nav="guide">Guide</a>
+      <a href="/help" data-nav="help">Help</a>
+    </nav>
+
+    <div class="top-actions">
+      <button id="near-me" class="btn ghost" type="button" title="Sort the whole catalogue by how far you actually are">Near me</button>
+      <button id="plan-open" class="btn primary" type="button">Make a route <span id="plan-count" class="pill" hidden>0</span></button>
+      <button id="menu-toggle" class="btn ghost" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="nav-drawer">≡</button>
+    </div>
+  </div>
 
   <form class="search" role="search" id="search-form">
     <label class="sr" for="q">Search pandals, streets, neighbourhoods</label>
@@ -151,24 +172,6 @@
     <button type="button" id="q-clear" class="q-clear" hidden aria-label="Clear search">×</button>
     <ul id="suggest" class="suggest" hidden role="listbox" aria-label="Suggestions"></ul>
   </form>
-  <button id="language-toggle" class="btn ghost small" type="button" aria-label="Switch interface language">বাংলা</button>
-  <button id="theme-toggle" class="btn ghost small" type="button" aria-pressed="false" aria-label="Switch to the dark theme" title="Switch between the bright and dark themes">Dark</button>
-
-  <nav class="mainnav" aria-label="Sections">
-    <a href="/" data-nav="map">Map</a>
-    <a href="/pandals" data-nav="pandals">Pandals</a>
-    <a href="/area/north-kolkata" data-nav="area">Areas</a>
-    <a href="/metro" data-nav="metro">Metro</a>
-    <a href="/routes" data-nav="routes">Routes</a>
-    <a href="/guide" data-nav="guide">Guide</a>
-    <a href="/help" data-nav="help">Help</a>
-  </nav>
-
-  <div class="top-actions">
-    <button id="near-me" class="btn ghost" type="button" title="Sort the whole catalogue by how far you actually are">Near me</button>
-    <button id="plan-open" class="btn primary" type="button">Make a route <span id="plan-count" class="pill" hidden>0</span></button>
-    <button id="menu-toggle" class="btn ghost" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="nav-drawer">≡</button>
-  </div>
 </header>
 
 <div id="offline-bar" class="offline-bar" hidden>You are offline. The map you already opened and your saved routes still work.</div>
