@@ -53,6 +53,8 @@ const STATION_BN = {
   'Satyajit Ray': 'সত্যজিৎ রায়',
   Karunamoyee: 'করুণাময়ী',
   'Salt Lake Sector V': 'সল্টলেক সেক্টর V',
+  'Salt Lake Stadium': 'সল্টলেক স্টেডিয়াম',
+  Thakurpukur: 'ঠাকুরপুকুর',
   'Howrah Maidan': 'হাওড়া ময়দান',
   'Dum Dum': 'দমদম',
   'Masterda Surya Sen': 'মাস্টারদা সূর্য সেন',
@@ -436,14 +438,18 @@ for (const [name, list] of byStation) {
   solvedStations.set(name, { lat: solved.lat, lon: solved.lon, rms: solved.rms });
 }
 
-/* where a station has a published position, that is the position. The solve is
-   only for stations nobody has published one for. */
+/* Where a station has a published position, that is the position. We seed the
+   map with *every* published station, not only the ones a published-walk pandal
+   names: a visitor-reported pandal must be placeable by any station we actually
+   know, including one (Salt Lake Stadium) that no upstream row happens to name.
+   The solve is only for stations nobody has published one for. */
 const stationPos = new Map();
+for (const [name, coords] of Object.entries(STATION_COORDS)) {
+  stationPos.set(name, { lat: coords[0], lon: coords[1], source: 'published' });
+}
 for (const [name, solved] of solvedStations) {
-  const pub = STATION_COORDS[name];
-  stationPos.set(name, pub
-    ? { lat: pub[0], lon: pub[1], source: 'published' }
-    : { lat: solved.lat, lon: solved.lon, source: 'derived' });
+  if (stationPos.has(name)) continue;
+  stationPos.set(name, { lat: solved.lat, lon: solved.lon, source: 'derived' });
 }
 
 /* the pandals added from visitor reports have no published walk: they take the
@@ -463,6 +469,7 @@ for (const p of pandals) {
     walkMeters: Math.round(bd * WALK_FACTOR),
     estimated: true,
   };
+  if (!byStation.has(best)) byStation.set(best, []);
   byStation.get(best).push(p);
   estimatedWalks++;
 }

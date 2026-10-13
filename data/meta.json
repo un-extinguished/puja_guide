@@ -1,10 +1,10 @@
 {
-  "builtAt": "2026-10-13T17:07:14.681Z",
+  "builtAt": "2026-10-13T17:34:40.686Z",
   "pandalCount": 338,
   "communityCount": 61,
-  "stationCount": 37,
+  "stationCount": 39,
   "lineCount": 5,
-  "stationWalkResidualMedian": 286,
+  "stationWalkResidualMedian": 284,
   "routeCount": 20,
   "photoCount": 18,
   "upstreamRows": 290,

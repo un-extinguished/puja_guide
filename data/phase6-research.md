@@ -167,13 +167,15 @@ blocks (FC, AG, AH, BA, AL, HB…) are doubly corroborated.
 4. **CD Block / Karunamayee G Block** — shared coarse pin; true grounds are adjacent but distinct.
 5. **Salt Lake Labony Estate** — single-source (thepujo page); no independent corroboration yet.
 6. **AJ existing row** — pin unchanged and correct; no action.
-7. **Station-set gap (follow-up):** the app's Green Line set lacks **City Centre** and **Salt Lake
-   Stadium** stations, so Sector I/III blocks near them resolve their nearest metro to Central Park /
-   Bengal Chemical / Karunamoyee instead (verified: HA → Bengal Chemical 1.45 km, though the stadium
-   station would be ~680 m). **Partly resolved post-Phase 6:** City Centre is now a station pin — it
-   became a candidate once BD Block pointed at it (§6, BD Block follow-up), and 18 Sector I blocks
-   re-solved to it. OSM confirms our City Centre coordinates (22.587069, 88.407875) to ~4 m.
-   **Salt Lake Stadium is still missing** — add it and re-solve.
+7. **Station-set gap (resolved).** The app's Green Line set lacked **City Centre** and **Salt Lake
+   Stadium**, so Sector I/III blocks near them resolved their nearest metro to Central Park / Bengal
+   Chemical / Karunamoyee instead (HA → Bengal Chemical 1.45 km, though the stadium station is only
+   ~680 m away in a straight line). City Centre came in first, via the BD Block fix (§6 #2), taking 18
+   Sector I blocks; OSM confirms our coordinates (22.587069, 88.407875) to ~4 m. The remaining stadium
+   gap was a *builder* bug rather than missing data — the estimator only considered stations that a
+   published-walk pandal names, so a station with published coordinates but no upstream row could never
+   be assigned to a visitor-reported pandal. The builder now seeds its candidate map from **every**
+   `STATION_COORDS` entry (§6 #3), which adds Salt Lake Stadium (6 blocks) and Thakurpukur (1).
 
 ## 6. Build notes
 
@@ -208,5 +210,24 @@ blocks (FC, AG, AH, BA, AL, HB…) are doubly corroborated.
   pandals, 53 VIP records, 61 community, 290 upstream rows.
 - Ship-side (post-Phase-6 #2): `DATA_VERSION` → 20261013-odbl-5; `sw.js` VERSION → pujahop-v21;
   `app.js` `?v=21`; data stamps updated to `-odbl-5`.
+- **UI follow-up (header search).** The search box lived inline in the top bar and was the item that
+  got flex-squeezed on maximised / mid-width windows (the owner reported it as missing). The header is
+  now two rows — `.top-bar` (brand, toggles, nav, actions) plus a full-width search row capped at
+  760 px; a new `--search-row` feeds `--header-height` so the map/panel inset stays exact. Ship-side:
+  `style.css` `?v=19` → `?v=20`.
+- **Post-Phase-6 follow-up #3 (station candidate set).** Root cause of the stadium gap fixed in
+  `scripts/build-data.mjs`: `stationPos` used to be seeded only from stations a published-walk pandal
+  names, so a station with published coordinates and no upstream row (Salt Lake Stadium 22.573056,
+  88.403056; Thakurpukur 22.464261, 88.307555) could never be the nearest metro for a
+  `community-report` row. The builder now seeds `stationPos` from **all** of `STATION_COORDS` (solved
+  stations still fill any gaps), and the estimate loop creates a `byStation` bucket if the chosen
+  station had none. Result: `stations.json` 37 → **39**. The 6 Salt Lake blocks re-solve to Salt Lake
+  Stadium (HA 1132 m, IA 1309, IB 1376, JC 1411, GD 1553, HB 1648 — all `estimated`), and
+  `thakurpukur-state-bank-park-sarbojanin` moves off Joka (1684 m) to Thakurpukur (374 m). Only those
+  7 estimated rows changed; no published-walk row moved, so the median walk residual is unchanged
+  within noise (286 → 284 m). Bengali names added for both new stations. Counts unchanged: 338
+  pandals, 53 VIP records, 61 community, 290 upstream rows.
+- Ship-side (post-Phase-6 #3): `DATA_VERSION` → 20261013-odbl-6; `sw.js` VERSION → pujahop-v23;
+  `app.js` `?v=22`; data stamps updated to `-odbl-6`.
 - Tests: `scripts/smoke.mjs` and `scripts/render-test.mjs` pass (render-test asserts the "338 pandals"
-  count line, the 53/54 VIP invariants, and the dynamic station count — now 37).
+  count line, the 53/54 VIP invariants, and the dynamic station count — 37 after #2, **39** after #3).
