@@ -1,4 +1,4 @@
-Data licence — Puja Guide pandal catalogue
+Data licence — PujaHop Kolkata pandal catalogue
 ==========================================
 
 The data in this directory — pandals.json, stations.json, routes.json, meta.json

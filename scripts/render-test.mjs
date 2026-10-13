@@ -47,7 +47,7 @@ const indexHtml = read('public/index.html')
 const fileFetch = async (url) => {
   const p = String(url);
   if (p.startsWith('/data/')) {
-    return { ok: true, status: 200, json: async () => JSON.parse(read('data/' + p.slice('/data/'.length))) };
+    return { ok: true, status: 200, json: async () => JSON.parse(read('data/' + p.slice('/data/'.length).split('?')[0])) };
   }
   if (p.includes('/api/crowd/summary')) return { ok: true, json: async () => ({ summary: {} }) };
   if (p.includes('/api/crowd')) return { ok: true, json: async () => ({ reports: [] }) };
@@ -70,10 +70,10 @@ const mapStub = ({ failOnMap = false } = {}) => {
       addSource(id) { this.sources.add(id); }
       addLayer(d) { if (d.source && !this.sources.has(d.source)) throw new Error('missing source ' + d.source); }
       getSource() { return { setData() {} }; }
-      setFilter() {}
+      setFilter(id, filter) { (this.filters ||= {})[id] = filter; }
       setLayoutProperty(id, k, v) { (this.layout ||= {})[id] = { ...(this.layout?.[id] || {}), [k]: v }; }
       setPaintProperty() {}
-      flyTo() {} fitBounds() {} easeTo() {}
+      flyTo() {} fitBounds() {} easeTo() {} resize() {}
       getZoom() { return 12; }
       getCanvas() { return { style: {} }; }
     },
@@ -83,7 +83,7 @@ const mapStub = ({ failOnMap = false } = {}) => {
   };
 };
 
-async function render({ maplibre, label, url = 'http://localhost/', type = '', clicks = [], narrow = false }) {
+async function render({ maplibre, label, url = 'http://localhost/', type = '', clicks = [], narrow = false, storage = null, uncheckMetro = false }) {
   const errors = [];
   const vc = new VirtualConsole();
   vc.on('jsdomError', (e) => errors.push('jsdom: ' + (e.message || e)));
@@ -92,6 +92,7 @@ async function render({ maplibre, label, url = 'http://localhost/', type = '', c
   const { window } = dom;
   window.fetch = fileFetch;
   window.caches = { open: async () => ({ add: async () => {} }) };
+  if (storage) for (const [k, v] of Object.entries(storage)) window.localStorage.setItem(k, v);
   window.addEventListener('unhandledrejection', (e) => errors.push('unhandled: ' + (e.reason?.message || e.reason)));
   /* pretend this is a phone. 'media' means the browser has matchMedia,
      'width' means it does not and we fall back to innerWidth. */
@@ -121,7 +122,7 @@ async function render({ maplibre, label, url = 'http://localhost/', type = '', c
     label,
     suggests: [...d.querySelectorAll('#suggest .suggest-item')].map((b) => b.textContent.replace(/\s+/g, ' ').trim()),
     toggleLabel: (d.querySelector('#panel-toggle-label')?.textContent || '').slice(0, 40),
-    collapsed: d.querySelector('.panel-head')?.classList.contains('collapsed') === true,
+    sheet: d.querySelector('#panel')?.dataset.sheet || '',
     photo: (d.querySelector('.card .photo img')?.getAttribute('src') || ''),
     photoCredit: (d.querySelector('.card .photo figcaption')?.textContent || '').slice(0, 90),
     pageText: (d.querySelector('#page')?.textContent || '').replace(/\s+/g, ' ').trim(),
@@ -136,6 +137,7 @@ async function render({ maplibre, label, url = 'http://localhost/', type = '', c
     cardHidden: d.querySelector('#card')?.hasAttribute('hidden') === true,
     pageHidden: d.querySelector('#page')?.hasAttribute('hidden') === true,
     legendHidden: d.querySelector('#map-legend')?.hasAttribute('hidden') === true,
+    theme: d.documentElement.getAttribute('data-theme') || '',
     realErrors: errors.filter((e) => !/map failed to start/.test(e)),
   };
   /* things a visitor can press, in order */
@@ -145,16 +147,32 @@ async function render({ maplibre, label, url = 'http://localhost/', type = '', c
     el.dispatchEvent(new window.MouseEvent('click', { bubbles: true }));
     await new Promise((r) => setTimeout(r, 40));
   }
+  if (uncheckMetro) {
+    const line = d.querySelector('#metro-line-options input[data-line]');
+    line.checked = false;
+    line.dispatchEvent(new window.Event('change', { bubbles: true }));
+  }
   if (clicks.length) {
     const m = mapsBuilt[mapsBuilt.length - 1];
     result.after = {
-      collapsed: d.querySelector('.panel-head')?.classList.contains('collapsed') === true,
+      sheet: d.querySelector('#panel')?.dataset.sheet || '',
       toggleLabel: (d.querySelector('#panel-toggle-label')?.textContent || '').slice(0, 40),
       toggleAria: d.querySelector('#panel-toggle')?.getAttribute('aria-expanded'),
       linesPressed: d.querySelector('#map-lines')?.getAttribute('aria-pressed'),
-      linesVisibility: String((m?.layout || {})['metro-lines']?.visibility || ''),
-      stored: String(window.localStorage.getItem('pujaguide.headCollapsed')),
+      linesExpanded: d.querySelector('#map-lines')?.getAttribute('aria-expanded'),
+      metroDrawerHidden: d.querySelector('#metro-drawer')?.hasAttribute('hidden') === true,
+      visibleLineCount: d.querySelectorAll('#metro-line-options input:checked').length,
+      lineFilter: JSON.stringify((m?.filters || {})['metro-lines'] || ''),
       legendHidden: d.querySelector('#map-legend')?.hasAttribute('hidden') === true,
+      mode: d.querySelector('#layout')?.dataset.mode || '',
+      viewListPressed: d.querySelector('#view-list')?.getAttribute('aria-pressed'),
+      locale: d.documentElement.lang,
+      count: d.querySelector('#count')?.textContent || '',
+      listItems: d.querySelectorAll('#list .item').length,
+      vipChipText: (d.querySelector('#chips button[data-kind="vip"]')?.textContent || '').replace(/\s+/g, ' ').trim(),
+      theme: d.documentElement.getAttribute('data-theme') || '',
+      themeLabel: (d.querySelector('#theme-toggle')?.textContent || '').trim(),
+      themeStored: window.localStorage.getItem('pujahop.theme'),
       realErrors: errors.filter((e) => !/map failed to start/.test(e)),
     };
   }
@@ -222,10 +240,11 @@ console.log('\nsearch suggestions');
   expect(r.suggests.some((t) => /Sarbojanin/i.test(t)), 'including Dum Dum Park Sarbojanin');
 }
 
-console.log('\nthe heading folds away on a phone');
+console.log('\nthe pandal sheet has a labelled collapsed state');
 {
   const r = await render({ maplibre: mapStub(), label: 'narrow', url: 'http://localhost/' });
   expect(typeof r.toggleLabel === 'string' && r.toggleLabel.length > 0, `the toggle is labelled "${r.toggleLabel}"`);
+  expect(r.sheet === 'collapsed', 'the map opens with its pandal sheet collapsed');
 }
 
 console.log('\na pandal with a photograph');
@@ -238,27 +257,76 @@ console.log('\na pandal with a photograph');
   expect(r.realErrors.length === 0, r.realErrors.length ? 'unexpected errors: ' + r.realErrors.join(' | ') : 'no unexpected errors');
 }
 
-console.log('\nthe buttons a visitor presses');
+console.log('\nthe sheet snaps and metro layers toggle');
 {
-  const r = await render({ maplibre: mapStub(), label: 'buttons', clicks: ['#panel-toggle', '#panel-toggle', '#map-lines'] });
+  const r = await render({ maplibre: mapStub(), label: 'buttons', clicks: ['#panel-toggle', '#panel-toggle', '#map-lines'], uncheckMetro: true });
   const a = r.after || {};
-  expect(a.collapsed === false, 'pressing the heading toggle twice leaves the heading open again');
-  expect(a.stored === 'false', `the choice is remembered (headCollapsed=${a.stored})`);
+  expect(a.sheet === 'full', 'the results handle cycles from collapsed through half to full');
   expect(a.toggleAria === 'true', 'the toggle tells a screen reader the panel is expanded');
   expect(typeof a.toggleLabel === 'string' && a.toggleLabel.length > 0, `still labelled "${a.toggleLabel}"`);
-  expect(a.linesPressed === 'false', 'the metro lines button reports the lines as hidden after one press');
-  expect(a.linesVisibility === 'none', 'and the map layer is actually switched off');
+  expect(a.linesPressed === 'true' && a.linesExpanded === 'true', 'the metro button opens its layer drawer without hiding routes');
+  expect(a.metroDrawerHidden === false, 'the metro drawer is visible when opened');
+  expect(a.visibleLineCount === 4, `toggling one line leaves ${a.visibleLineCount} of five metro lines visible`);
+  expect(a.lineFilter.includes('"literal"'), 'the map layer filter is updated with the selected routes');
   expect(a.realErrors.length === 0, a.realErrors.length ? 'unexpected errors: ' + a.realErrors.join(' | ') : 'no unexpected errors');
 }
 
-console.log('\ncollapse is the default on a phone');
+console.log('\nthe sheet opens from its handle on a phone');
 for (const [mode, how] of [['media', 'with matchMedia'], ['width', 'without matchMedia']]) {
   const r = await render({ maplibre: mapStub(), label: 'phone-' + mode, narrow: mode, clicks: ['#panel-toggle'] });
   const a = r.after || {};
-  expect(r.collapsed === true, `the heading starts folded ${how}`);
-  expect(a.collapsed === false, `and opens when the visitor presses the toggle (${how})`);
-  expect(a.stored === 'false', `the open choice is remembered (${how})`);
+  expect(r.sheet === 'collapsed', `the results sheet starts collapsed ${how}`);
+  expect(a.sheet === 'half', `and opens to its half position when tapped (${how})`);
   expect(a.realErrors.length === 0, a.realErrors.length ? 'unexpected errors: ' + a.realErrors.join(' | ') : `no unexpected errors (${how})`);
+}
+
+console.log('\nmap/list, language, and quick-filter controls');
+{
+  const r = await render({
+    maplibre: mapStub(),
+    label: 'view-language-filter',
+    clicks: ['#view-list', '#language-toggle', '#chips button[data-kind="quick"]'],
+  });
+  expect(r.after?.mode === 'list' && r.after?.viewListPressed === 'true', 'the list view is selectable and announced');
+  expect(r.after?.locale === 'bn' && /প্যান্ডেল/.test(r.after?.count || ''), 'the Bengali switch translates the count and document language');
+  expect(r.after?.listItems === 10 && /10/.test(r.after?.count || ''), 'the closest-ten filter returns exactly ten pandals');
+  expect(r.after?.realErrors.length === 0, r.after?.realErrors.length ? 'unexpected errors: ' + r.after.realErrors.join(' | ') : 'new controls produce no unexpected errors');
+}
+
+console.log('\nthe VIP pass filter');
+{
+  const meta = JSON.parse(read('data/meta.json'));
+  const r = await render({
+    maplibre: mapStub(),
+    label: 'vip-filter',
+    clicks: ['#chips button[data-kind="vip"]', '#load-more'],
+  });
+  expect(new RegExp(`VIP Pandals \\(${meta.vipCount}\\)`).test(r.after?.vipChipText || ''), `the chip is labelled "${r.after?.vipChipText}"`);
+  expect(r.after?.listItems === meta.vipCount && new RegExp(`${meta.vipCount} of ${meta.pandalCount}`).test(r.after?.count || ''), `the VIP filter keeps exactly the ${r.after?.listItems} pass pandals`);
+  expect(r.after?.realErrors.length === 0, r.after?.realErrors.length ? 'unexpected errors: ' + r.after?.realErrors.join(' | ') : 'the VIP filter produces no errors');
+}
+
+console.log('\nthe VIP filter toggles off and composes with other filters');
+{
+  const meta = JSON.parse(read('data/meta.json'));
+  const r = await render({
+    maplibre: mapStub(),
+    label: 'vip-toggle-off',
+    clicks: ['#chips button[data-kind="vip"]', '#chips button[data-kind="vip"]'],
+  });
+  expect(r.after?.listItems > 40, `toggling the VIP chip off restores the full ${r.after?.listItems}-pandal list`);
+  expect(new RegExp(`VIP Pandals \\(${meta.vipCount}\\)`).test(r.after?.vipChipText || ''), 'the chip keeps showing the live count while off');
+  expect(r.after?.realErrors.length === 0, r.after?.realErrors.length ? 'unexpected errors: ' + r.after.realErrors.join(' | ') : 'toggling the VIP chip produces no errors');
+}
+{
+  const meta = JSON.parse(read('data/meta.json'));
+  const r = await render({
+    maplibre: mapStub(),
+    label: 'vip-combined',
+    clicks: ['#chips button[data-kind="vip"]', '#chips button[data-kind="quick"]'],
+  });
+  expect(r.after?.listItems === 10, `VIP + closest-ten compose: ${r.after?.listItems} of ${meta.vipCount} VIP pandals appear`);
+  expect(r.after?.realErrors.length === 0, r.after?.realErrors.length ? 'unexpected errors: ' + r.after?.realErrors.join(' | ') : 'combined filters produce no errors');
 }
 
 console.log('\nthe metro page, line by line');
@@ -285,6 +353,7 @@ console.log('\nthe numbers on the pages match the data');
             [meta.lineCount, 'metro lines'], [meta.photoCount, 'photographs']],
     press: [[meta.lineCount, 'metro lines'], [meta.routeCount, 'walking routes'], [meta.photoCount, 'photographs']],
     contact: [[meta.photoCount, 'photographs']],
+    help: [],
   };
   for (const [page, numbers] of Object.entries(pages)) {
     const r = await render({ maplibre: mapStub(), label: page, url: 'http://localhost/' + page });
@@ -296,6 +365,87 @@ console.log('\nthe numbers on the pages match the data');
       expect(!/does not display photographs yet/.test(r.pageText), `/${page} no longer claims photographs are not shown`);
     }
   }
+}
+
+console.log('\nthe intro preloader');
+{
+  const preloaderCode = read('public/preloader.js');
+  const makeDom = () => new JSDOM(indexHtml, {
+    url: 'http://localhost/', runScripts: 'outside-only', pretendToBeVisual: true,
+  });
+
+  /* fresh session: it shows, locks scroll, rains gold, and Skip Intro clears it */
+  {
+    const w = makeDom().window;
+    w.eval(preloaderCode);
+    const d = w.document;
+    const particles = d.querySelectorAll('.ph-particle').length;
+    expect(!!d.getElementById('ph-preloader'), 'the overlay is present on a fresh session');
+    expect(d.documentElement.classList.contains('ph-lock'), 'scroll is locked while the intro plays');
+    expect(particles > 0, `${particles} golden particles were generated`);
+    expect(!!d.getElementById('ph-skip'), 'the Skip Intro button exists');
+    expect(/PujaHop/.test(d.querySelector('.ph-intro-title')?.textContent || ''), 'the overlay is branded PujaHop Kolkata');
+    d.getElementById('ph-skip').dispatchEvent(new w.MouseEvent('click', { bubbles: true }));
+    await new Promise((r) => setTimeout(r, 850));
+    expect(!d.getElementById('ph-preloader'), 'Skip Intro removes the overlay');
+    expect(!d.documentElement.classList.contains('ph-lock'), 'scroll is unlocked after skipping');
+    expect(w.sessionStorage.getItem('pujahop.introSeen') === '1', 'the session is marked as seen');
+    w.close();
+  }
+
+  /* a second view in the same session goes straight to the app */
+  {
+    const w = makeDom().window;
+    w.sessionStorage.setItem('pujahop.introSeen', '1');
+    w.eval(preloaderCode);
+    expect(!w.document.getElementById('ph-preloader'), 'a second view in the same session skips the intro');
+    expect(!w.document.documentElement.classList.contains('ph-lock'), 'and never locks scroll');
+    w.close();
+  }
+
+  /* reduced motion: no particles, and the app hand-over clears it at once */
+  {
+    const w = makeDom().window;
+    w.matchMedia = (q) => ({ matches: /reduce/.test(q), addEventListener() {}, removeEventListener() {} });
+    w.eval(preloaderCode);
+    expect(w.document.querySelectorAll('.ph-particle').length === 0, 'reduced motion drops the particles');
+    w.__pujahopReady = true;
+    w.dispatchEvent(new w.Event('pujahop:reveal'));
+    await new Promise((r) => setTimeout(r, 120));
+    expect(!w.document.getElementById('ph-preloader'), 'the app hand-over removes the overlay (reduced motion)');
+    w.close();
+  }
+
+  /* the ordinary hand-over respects a short minimum beat before revealing */
+  {
+    const w = makeDom().window;
+    w.eval(preloaderCode);
+    w.__pujahopReady = true;
+    w.dispatchEvent(new w.Event('pujahop:reveal'));
+    await new Promise((r) => setTimeout(r, 300));
+    expect(!!w.document.getElementById('ph-preloader'), 'the overlay holds for its cinematic beat before the app appears');
+    await new Promise((r) => setTimeout(r, 2600));
+    expect(!w.document.getElementById('ph-preloader'), 'and then hands over to the map');
+    w.close();
+  }
+}
+
+console.log('\nthe dark and bright themes');
+{
+  const r = await render({ maplibre: mapStub(), label: 'theme', clicks: ['#theme-toggle'] });
+  expect(r.theme === '', 'the page opens in the bright theme');
+  expect(r.after.theme === 'dark', 'the theme button switches to the dark theme');
+  expect(r.after.themeStored === 'dark', 'the choice is remembered in localStorage');
+  expect(r.after.themeLabel === 'Bright', 'and the button now offers the bright theme');
+  expect(r.after.realErrors.length === 0, r.after.realErrors.length ? 'unexpected errors: ' + r.after.realErrors.join(' | ') : 'no unexpected errors');
+
+  const back = await render({ maplibre: mapStub(), label: 'theme-back', clicks: ['#theme-toggle', '#theme-toggle'] });
+  expect(back.after.theme === '', 'a second press returns to the bright theme');
+  expect(back.after.themeStored === 'light', 'and that is remembered too');
+
+  const saved = await render({ maplibre: mapStub(), label: 'theme-saved', storage: { 'pujahop.theme': 'dark' } });
+  expect(saved.theme === 'dark', 'a saved dark choice comes back on the next visit');
+  expect(saved.realErrors.length === 0, saved.realErrors.length ? 'unexpected errors: ' + saved.realErrors.join(' | ') : 'no unexpected errors');
 }
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nrender test passed');

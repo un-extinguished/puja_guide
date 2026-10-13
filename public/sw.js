@@ -10,17 +10,20 @@
  * The API is never cached: a queue report from twenty minutes ago is not
  * information.
  */
-const VERSION = 'pujaguide-v8';
+const VERSION = 'pujahop-v18';
 const SHELL = [
   '/',
-  '/style.css?v=10',
-  '/app.js?v=10',
+  '/style.css?v=18',
+  '/app.js?v=18',
+  '/preloader.css?v=1',
+  '/preloader.js?v=1',
   '/vendor/maplibre-gl.css?v=4.7.1',
   '/vendor/maplibre-gl.js?v=4.7.1',
-  '/data/pandals.json',
-  '/data/stations.json',
-  '/data/routes.json',
-  '/data/lines.json', '/data/photos.json',
+  '/data/pandals.json?v=20261013-odbl-2',
+  '/data/stations.json?v=20261013-odbl-2',
+  '/data/routes.json?v=20261013-odbl-2',
+  '/data/lines.json?v=20261013-odbl-2', '/data/meta.json?v=20261013-odbl-2',
+  '/data/photos.json',
   '/manifest.webmanifest',
   '/icon.svg',
 ];
@@ -63,7 +66,7 @@ self.addEventListener('fetch', (event) => {
         .then((res) => put(request, res))
         .catch(() => caches.match(request).then((r) => r || caches.match('/')))
         .then((res) => res || new Response(
-          '<!doctype html><meta charset="utf-8"><title>Offline — Puja Guide</title>' +
+          '<!doctype html><meta charset="utf-8"><title>Offline — PujaHop Kolkata</title>' +
           '<p style="font:16px/1.6 system-ui;padding:12vh 1rem;max-width:34rem;margin:auto">You are offline and this page was not saved. ' +
           'The map you opened before and any route you saved for offline will still work.</p>',
           { headers: { 'content-type': 'text/html; charset=utf-8' } }

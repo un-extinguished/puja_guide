@@ -1,4 +1,4 @@
-/* Puja Guide — own styling, no framework. Marigold and vermilion, because
+/* PujaHop Kolkata — own styling, no framework. Marigold and vermilion, because
    that is what a Puja looks like; everything else stays out of the way. */
 :root {
   --ink: #17161a;
@@ -128,6 +128,10 @@ h3 { font-size: 1rem; }
 .badge.busy { border-color: #f3c795; background: #fdf3e6; color: #8a4708; }
 .badge.packed { border-color: #eaa9a9; background: #fdeeee; color: #8f1f1f; }
 .badge.verified { border-color: #a9c6e6; background: #eef4fb; color: #1c4c7d; }
+.badge.review { border-color: #e3c98d; background: #fff6df; color: #72500b; }
+.badge.vip { border-color: #e3b554; background: #fdf6dd; color: #7a4f07; font-weight: 600; }
+.review-note { margin: 7px 0 0; padding: 8px 10px; border: 1px solid #e3c98d; border-radius: 9px; background: #fff6df; color: #72500b; font-size: 12.5px; }
+.review-note.vip { border-color: #e3b554; background: #fdf6dd; color: #7a4f07; }
 .list-empty { padding: 18px 14px; color: var(--ink-2); }
 .panel-foot { margin-top: auto; padding: 12px 14px 20px; border-top: 1px solid var(--line); }
 .fine { font-size: 11.5px; color: var(--ink-3); margin: 8px 0 0; line-height: 1.5; }
@@ -278,6 +282,16 @@ details.more summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
 .panel-toggle:hover { background: var(--paper-2); }
 .panel-toggle .chev { transition: transform .18s ease; display: inline-block; }
 .panel-toggle[aria-expanded="true"] .chev { transform: rotate(180deg); }
+.view-toggle {
+  display: flex; flex: 0 0 auto; gap: 2px; padding: 3px;
+  border: 1px solid var(--line); border-radius: 10px; background: #fff;
+}
+.view-toggle button {
+  border: 0; border-radius: 7px; padding: 6px 9px; background: transparent;
+  color: var(--ink-2); font: inherit; font-size: 12px; cursor: pointer;
+}
+.view-toggle button[aria-pressed="true"] { background: #f6e7c8; color: #6d3f0a; font-weight: 650; }
+.location-field { flex-basis: 100%; }
 .panel-head.collapsed #panel-title-block,
 .panel-head.collapsed .panel-tools,
 .panel-head.collapsed #chips { display: none; }
@@ -293,3 +307,300 @@ details.more summary { cursor: pointer; font-size: 13px; color: var(--ink-2); }
 .stationlist { columns: 2; font-size: 14px; margin: 6px 0 14px; padding-left: 18px; }
 @media (max-width: 620px) { .stationlist { columns: 1; } }
 .map-legend .swatch { margin-right: 6px; }
+
+/* -------------------------------------------------------- map-first shell */
+:root { --header-height: calc(var(--top) + env(safe-area-inset-top)); }
+html, body { width: 100%; height: 100%; overflow: hidden; }
+body { overscroll-behavior: none; }
+.top { height: var(--header-height); padding-top: env(safe-area-inset-top); }
+.layout {
+  position: fixed; inset: var(--header-height) 0 0; display: block;
+  height: auto; padding: 0; overflow: hidden;
+}
+.mapwrap { position: absolute; inset: 0; }
+.panel {
+  position: absolute; z-index: 20; left: 14px; bottom: max(12px, env(safe-area-inset-bottom));
+  width: min(var(--rail), calc(100vw - 28px)); height: min(58dvh, 700px);
+  border: 1px solid rgba(226, 219, 205, .95); border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(23, 22, 26, .18); background: rgba(253, 251, 247, .98);
+  overflow: hidden; transition: height 240ms cubic-bezier(.2,.75,.25,1);
+}
+.panel.dragging { transition: none; }
+.panel[data-sheet="collapsed"] { height: 66px; }
+.panel[data-sheet="half"] { height: min(53dvh, 620px); }
+.panel[data-sheet="full"] { height: calc(100% - max(24px, env(safe-area-inset-bottom) + 12px)); }
+.panel-head {
+  position: relative; top: auto; z-index: 1; flex: 0 0 auto; padding: 0 12px 9px;
+  border-bottom: 1px solid var(--line); background: var(--paper); overflow: visible;
+}
+.panel-toggle {
+  display: flex; position: relative; align-items: center; justify-content: center;
+  gap: 9px; min-height: 46px; border: 0; border-radius: 0; padding: 10px 8px 6px;
+  margin: 0; background: transparent; color: var(--ink); font-size: 13px; font-weight: 650;
+  touch-action: none; user-select: none; cursor: grab;
+}
+.panel-toggle:active { cursor: grabbing; }
+.drag-handle { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 36px; height: 4px; border-radius: 99px; background: #c8c1b5; }
+.panel[data-sheet="collapsed"] .panel-head { padding: 0; border: 0; }
+.panel[data-sheet="collapsed"] .panel-head { display: flex; align-items: center; }
+.panel[data-sheet="collapsed"] .panel-toggle { flex: 1 1 auto; width: auto; min-height: 64px; padding-top: 16px; }
+.panel[data-sheet="collapsed"] .view-toggle { display: flex; margin-right: 8px; }
+.panel[data-sheet="collapsed"] #panel-title-block,
+.panel[data-sheet="collapsed"] .panel-tools,
+.panel[data-sheet="collapsed"] .filter-disclosure,
+.panel[data-sheet="collapsed"] #count,
+.panel[data-sheet="collapsed"] .list,
+.panel[data-sheet="collapsed"] .list-empty,
+.panel[data-sheet="collapsed"] .panel-foot { display: none; }
+.panel[data-sheet="half"] #panel-title-block,
+.panel[data-sheet="half"] .panel-foot { display: none; }
+.panel-tools { gap: 8px; margin: 5px 0 7px; }
+.field { flex: 1 1 125px; }
+.field select { width: 100%; }
+.filter-disclosure { margin: 3px 0 0; }
+.filter-disclosure > summary { cursor: pointer; color: var(--ink-2); font-size: 12px; font-weight: 600; padding: 4px 0; }
+.chips { max-height: none; overflow-x: auto; overflow-y: hidden; flex-wrap: nowrap; margin: 4px 0; padding: 1px 1px 5px; scrollbar-width: thin; }
+.chips .chip { flex: 0 0 auto; }
+.chip { font-size: 12px; padding: 3px 8px; }
+.count { margin: 3px 0 0; }
+.list {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain;
+  padding: 5px 8px; gap: 2px; scrollbar-width: thin;
+}
+.item > button { padding: 8px 9px; gap: 2px; }
+.item-name { gap: 6px; flex-wrap: wrap; }
+.item-name strong { font-size: 14px; }
+.item-bn, .item-meta { font-size: 11.5px; }
+.panel-foot { flex: 0 0 auto; margin-top: 0; padding: 7px 12px 10px; }
+.panel-foot .fine { display: none; }
+.map-overlay { inset: 12px 12px auto; justify-content: flex-end; }
+.map-tools {
+  display: flex; flex-direction: column; gap: 5px; padding: 5px;
+  background: rgba(255,255,255,.95); border: 1px solid rgba(226,219,205,.9);
+  border-radius: 13px; box-shadow: var(--shadow);
+}
+.map-control {
+  display: grid; place-items: center; width: 38px; height: 38px; padding: 0;
+  border: 0; border-radius: 9px; background: #fff; color: var(--ink);
+  font: 600 20px/1 ui-sans-serif, system-ui, sans-serif; cursor: pointer;
+}
+.map-control:hover, .map-control[aria-pressed="true"] { background: #f7eee0; color: var(--accent); }
+.map-control:disabled { cursor: not-allowed; opacity: .45; }
+.map-control-label { font-size: 11px; }
+.map-credit {
+  z-index: 22; left: auto; right: 9px; bottom: 8px; width: max-content;
+  max-width: min(70vw, 470px); font-size: 10px; box-shadow: 0 1px 5px rgba(0,0,0,.12);
+}
+.card { z-index: 25; }
+.map-note { top: 12px; }
+.drawer-backdrop {
+  position: fixed; z-index: 48; inset: var(--header-height) 0 0;
+  background: rgba(20, 18, 16, .32); backdrop-filter: blur(1px);
+}
+.drawer, .side-drawer {
+  position: fixed; z-index: 50; top: var(--header-height); bottom: 0;
+  width: min(420px, 100vw); background: #fff; box-shadow: var(--shadow);
+  display: flex; flex-direction: column; transition: transform 240ms cubic-bezier(.2,.75,.25,1);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+.drawer { right: 0; border-left: 1px solid var(--line); transform: translateX(105%); }
+.drawer.open { transform: translateX(0); }
+.side-drawer { left: 0; border-right: 1px solid var(--line); transform: translateX(-105%); }
+.side-drawer.open { transform: translateX(0); }
+.drawer-head { flex: 0 0 auto; }
+.drawer-nav { display: grid; align-content: start; gap: 4px; padding: 12px; overflow-y: auto; }
+.drawer-nav a, .drawer-nav button {
+  display: block; width: 100%; padding: 11px 12px; border: 0; border-radius: 9px;
+  color: var(--ink); background: transparent; font: inherit; text-align: left; text-decoration: none;
+}
+.drawer-nav a:hover, .drawer-nav button:hover { background: var(--paper-2); }
+.metro-line-options { overflow-y: auto; padding: 12px; }
+.metro-line-option { display: flex; align-items: flex-start; gap: 10px; padding: 12px 8px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.metro-line-option input { margin: 4px 0 0; accent-color: var(--accent); }
+.metro-line-option .swatch { flex: 0 0 18px; margin: 8px 0 0; }
+.metro-line-option span { display: grid; gap: 2px; }
+.metro-line-option small { color: var(--ink-3); font-size: 12px; }
+.only-mobile { display: inline-block; }
+.page { top: var(--header-height); }
+.offline-bar { top: var(--header-height); }
+.suggest { z-index: 60; }
+.layout[data-mode="list"] .mapwrap { display: none; }
+.layout[data-mode="list"] .panel {
+  inset: 0; width: auto; height: auto; max-height: none; border: 0;
+  border-radius: 0; box-shadow: none; transition: none;
+}
+.layout[data-mode="list"] .panel[data-sheet="collapsed"],
+.layout[data-mode="list"] .panel[data-sheet="half"] { height: auto; }
+.layout[data-mode="list"] .panel[data-sheet="collapsed"] .panel-head,
+.layout[data-mode="list"] .panel[data-sheet="half"] .panel-head { display: block; padding: 0 12px 9px; border-bottom: 1px solid var(--line); }
+.layout[data-mode="list"] .panel-toggle { display: none; }
+.layout[data-mode="list"] .panel-title-block,
+.layout[data-mode="list"] #panel-title-block,
+.layout[data-mode="list"] .panel-tools,
+.layout[data-mode="list"] .filter-disclosure,
+.layout[data-mode="list"] #count,
+.layout[data-mode="list"] .list,
+.layout[data-mode="list"] .list-empty,
+.layout[data-mode="list"] .panel-foot { display: flex; }
+.layout[data-mode="list"] #panel-title-block { display: block; }
+.layout[data-mode="list"] .panel-tools { display: flex; }
+.layout[data-mode="list"] .filter-disclosure { display: block; }
+.layout[data-mode="list"] #count { display: block; }
+.layout[data-mode="list"] .list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); align-content: start; overflow: auto; }
+.layout[data-mode="list"] .panel-foot { display: block; }
+.layout[data-mode="list"] .view-toggle { margin: 5px 0; }
+.help-emergency { border: 1px solid #e7b8a8; border-left: 5px solid var(--accent); border-radius: 12px; padding: 16px; background: #fff8f3; }
+.help-number { display: inline-flex; align-items: center; justify-content: center; min-width: 74px; margin: 6px 10px 6px 0; padding: 8px 14px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 1.35rem; font-weight: 750; text-decoration: none; }
+.help-links { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; margin: 14px 0; }
+.help-links a { display: block; padding: 12px; border: 1px solid var(--line); border-radius: 10px; background: #fff; text-decoration: none; }
+
+@media (max-width: 900px) {
+  :root { --top: 54px; }
+  .top { gap: 8px; padding-right: max(8px, env(safe-area-inset-right)); padding-left: max(8px, env(safe-area-inset-left)); }
+  .mainnav { display: none; }
+  .search { flex: 1 1 100px; min-width: 0; max-width: none; }
+  .search input { padding: 8px 28px 8px 9px; font-size: 13px; }
+  #language-toggle, #theme-toggle { padding: 6px 8px; font-size: 12px; }
+  .brand { gap: 6px; }
+  .brand-mark { width: 32px; height: 32px; }
+  .brand-text { font-size: 13px; }
+  .brand-text small { display: none; }
+  .top-actions { gap: 4px; }
+  #near-me { display: inline-block; padding: 6px 7px; font-size: 11px; }
+  #plan-open { padding: 7px 8px; font-size: 12px; }
+  #menu-toggle { padding: 6px 9px; }
+  .panel {
+    left: 8px; right: 8px; bottom: max(8px, env(safe-area-inset-bottom));
+    width: auto; max-height: calc(100% - 16px);
+  }
+  .panel[data-sheet="half"] { height: 50dvh; }
+  .panel[data-sheet="full"] { height: calc(100% - max(16px, env(safe-area-inset-bottom) + 8px)); }
+  .map-overlay { inset: 10px max(8px, env(safe-area-inset-right)) auto; }
+  .map-tools { gap: 4px; padding: 4px; }
+  .map-control { width: 36px; height: 36px; }
+  .map-credit { right: 6px; bottom: 7px; max-width: 58vw; font-size: 9px; }
+  .card { left: 8px; right: 8px; bottom: calc(72px + env(safe-area-inset-bottom)); width: auto; max-height: min(46dvh, 480px); }
+  .drawer, .side-drawer { width: min(400px, 100vw); }
+  .map-note { top: 8px; left: 8px; right: 54px; padding: 9px 10px; }
+  .suggest { position: fixed; left: 8px; right: 8px; top: calc(var(--header-height) + 4px); }
+  .layout[data-mode="list"] .panel { position: absolute; inset: 0; }
+  .layout[data-mode="list"] .panel[data-sheet="collapsed"],
+  .layout[data-mode="list"] .panel[data-sheet="half"] { height: auto; }
+  .layout[data-mode="list"] .panel-head { position: sticky; top: 0; z-index: 5; }
+}
+@media (max-width: 768px) {
+  .map-credit {
+    z-index: 19; top: 8px; right: auto; bottom: auto; left: 8px;
+    width: fit-content; max-width: calc(100% - 58px);
+    margin: 0; padding: 4px 6px; border-radius: 7px;
+    font-size: 9px; line-height: 1.3;
+  }
+}
+@media (max-width: 390px) {
+  .brand-text { display: none; }
+  #plan-open { font-size: 11px; }
+  #language-toggle, #theme-toggle { padding: 5px 6px; font-size: 11px; }
+}
+@media print {
+  html, body { height: auto; overflow: visible; }
+  .layout { position: static; height: 60vh; }
+}
+
+/* ============================================================== dark theme
+   A second, deliberately dark palette: near-black ground, ember red, marigold
+   gold. The header button flips html[data-theme="dark"]; the choice is applied
+   before the first paint (inline script in index.html and preloader.js) and
+   remembered in localStorage.
+
+   Everything below is a colour override at higher specificity — nothing moves,
+   hides or changes size, so the layout the render tests lock down is
+   untouched. The map tiles themselves are only ever tinted, never re-styled. */
+html { color-scheme: light; }
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: #f3ede2;
+  --ink-2: #cdc4b7;
+  --ink-3: #968c7e;
+  --paper: #14100e;
+  --paper-2: #221b17;
+  --line: #3a2f27;
+  --accent: #ff6a4d;
+  --accent-2: #f2be4a;
+  --easy: #5cb861;
+  --busy: #f0a04a;
+  --packed: #ef7070;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .5), 0 10px 30px rgba(0, 0, 0, .55);
+}
+
+/* --- shell surfaces --- */
+html[data-theme="dark"] .top { background: rgba(20, 16, 14, .92); }
+html[data-theme="dark"] .brand-mark { background: linear-gradient(150deg, var(--accent), #7a1409); }
+html[data-theme="dark"] .btn:not(.ghost):not(.primary) { background: #1d1713; }
+
+html[data-theme="dark"] .search input,
+html[data-theme="dark"] .field select,
+html[data-theme="dark"] .chip,
+html[data-theme="dark"] .badge,
+html[data-theme="dark"] .crowd-btn,
+html[data-theme="dark"] .view-toggle,
+html[data-theme="dark"] .cards a,
+html[data-theme="dark"] .photo,
+html[data-theme="dark"] .map-control,
+html[data-theme="dark"] .help-links a,
+html[data-theme="dark"] .map-note,
+html[data-theme="dark"] .suggest { background: #1d1713; }
+
+html[data-theme="dark"] .card,
+html[data-theme="dark"] .card-head,
+html[data-theme="dark"] .drawer,
+html[data-theme="dark"] .side-drawer,
+html[data-theme="dark"] .mainnav.open { background: #1d1713; }
+
+html[data-theme="dark"] .panel {
+  background: rgba(20, 16, 14, .98);
+  border-color: rgba(58, 47, 39, .95);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .6);
+}
+
+/* --- chosen / pressed states --- */
+html[data-theme="dark"] .mainnav a[aria-current="page"],
+html[data-theme="dark"] .chip[aria-pressed="true"],
+html[data-theme="dark"] .btn[aria-pressed="true"],
+html[data-theme="dark"] .view-toggle button[aria-pressed="true"],
+html[data-theme="dark"] .item[data-active="true"] > button { background: #3b2c14; color: #ffd98a; border-color: #5c4617; }
+
+/* --- status colours, kept legible on the dark ground --- */
+html[data-theme="dark"] .badge.easy { background: rgba(92, 184, 97, .16); border-color: rgba(92, 184, 97, .5); color: #a8dfac; }
+html[data-theme="dark"] .badge.busy { background: rgba(240, 160, 74, .16); border-color: rgba(240, 160, 74, .5); color: #f4cd97; }
+html[data-theme="dark"] .badge.packed { background: rgba(239, 112, 112, .16); border-color: rgba(239, 112, 112, .5); color: #f3aaaa; }
+html[data-theme="dark"] .badge.verified { background: rgba(122, 170, 226, .16); border-color: rgba(122, 170, 226, .5); color: #accaf0; }
+html[data-theme="dark"] .badge.review { background: rgba(242, 190, 74, .16); border-color: rgba(242, 190, 74, .5); color: #f1d79b; }
+html[data-theme="dark"] .badge.vip { background: rgba(227, 181, 84, .16); border-color: rgba(227, 181, 84, .55); color: #f2d38a; }
+html[data-theme="dark"] .crowd-btn.easy { color: #a8dfac; border-color: rgba(92, 184, 97, .55); }
+html[data-theme="dark"] .crowd-btn.busy { color: #f4cd97; border-color: rgba(240, 160, 74, .55); }
+html[data-theme="dark"] .crowd-btn.packed { color: #f3aaaa; border-color: rgba(239, 112, 112, .55); }
+html[data-theme="dark"] .review-note { background: rgba(242, 190, 74, .12); border-color: rgba(242, 190, 74, .45); color: #f1d79b; }
+html[data-theme="dark"] .help-emergency { background: #1f1512; border-color: #5a3128; }
+
+/* --- map chrome, and the tiles themselves --- */
+html[data-theme="dark"] .map-tools { background: rgba(29, 23, 19, .94); border-color: var(--line); }
+html[data-theme="dark"] .map-legend { background: rgba(29, 23, 19, .95); }
+html[data-theme="dark"] .map-credit { background: rgba(29, 23, 19, .86); color: #cfc7ba; }
+html[data-theme="dark"] .map-credit a { color: var(--accent-2); }
+html[data-theme="dark"] .map-control:hover,
+html[data-theme="dark"] .map-control[aria-pressed="true"] { background: #35271b; color: var(--accent-2); }
+html[data-theme="dark"] .drag-handle { background: #4a3f35; }
+
+/* Invert-and-rotate is the long-standing trick for darkening a light map
+   without a second tile style: lightness flips, hues come back roughly where
+   they were, so the crowd pins keep their meaning. Scoped to the map canvas
+   only — the legend, tools and credit overlay sit outside #map and are
+   recoloured above. */
+html[data-theme="dark"] #map { filter: invert(1) hue-rotate(180deg) brightness(.94) contrast(.92); }
+
+/* --- prose and odds and ends --- */
+html[data-theme="dark"] .page-inner p,
+html[data-theme="dark"] .page-inner li { color: #cdc4b7; }
+html[data-theme="dark"] .toast { background: #f4efe6; color: #17161a; }
+html[data-theme="dark"] .skip:focus { background: #1d1713; color: var(--ink); }

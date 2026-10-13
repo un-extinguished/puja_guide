@@ -1,14 +1,18 @@
 {
-  "builtAt": "2026-10-07T20:09:20.344Z",
-  "pandalCount": 353,
-  "communityCount": 3,
-  "stationCount": 38,
+  "builtAt": "2026-10-13T14:30:40.142Z",
+  "pandalCount": 296,
+  "communityCount": 19,
+  "stationCount": 36,
   "lineCount": 5,
-  "stationWalkResidualMedian": 416,
+  "stationWalkResidualMedian": 284,
   "routeCount": 20,
   "photoCount": 18,
-  "upstreamRows": 363,
-  "mergedRows": 10,
+  "upstreamRows": 290,
+  "mergedRows": 13,
+  "vipCount": 53,
+  "vipSouthCount": 24,
+  "vipNorthCount": 30,
+  "vipMissingCount": 0,
   "source": "Reconstructed from the ODbL dataset published at https://www.pujomap.com/data/pandals.json",
   "licence": "ODbL 1.0 — © OpenStreetMap contributors",
   "derivedFields": [
@@ -20,6 +24,7 @@
     "routes[] (generated from coordinates; distances are estimates)",
     "lines[].coordinates (drawn through published station coordinates, not surveyed)",
     "photo.fromPinMeters / photo.corroborates (photograph GPS measured against our pin)",
-    "nearestMetro.estimated (true where a pandal had no published walk)"
+    "nearestMetro.estimated (true where a pandal had no published walk)",
+    "isVIP / vipReview (from data/vip-list.json — the owner's pass list)"
   ]
 }

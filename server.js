@@ -1,5 +1,5 @@
 /**
- * Puja Guide server.
+ * PujaHop Kolkata server.
  *
  * Deliberately dependency-free apart from the static map library: no build
  * step, no framework. It serves the app, serves the open data, and runs the
@@ -224,7 +224,7 @@ const server = http.createServer(async (req, res) => {
 
     res.writeHead(404, { 'content-type': 'text/html; charset=utf-8' });
     res.end(
-      '<!doctype html><meta charset="utf-8"><title>Not found — Puja Guide</title>' +
+      '<!doctype html><meta charset="utf-8"><title>Not found — PujaHop Kolkata</title>' +
       '<style>body{font:16px/1.6 system-ui;margin:12vh auto;max-width:34rem;padding:0 1rem;color:#1d1d1f}</style>' +
       '<h1>Not found</h1><p>That page is not on this map. <a href="/">Back to the pandal map</a>.</p>'
     );
@@ -235,5 +235,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`Puja Guide on http://${HOST}:${PORT}`);
+  console.log(`PujaHop Kolkata on http://${HOST}:${PORT}`);
 });

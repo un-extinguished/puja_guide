@@ -3,28 +3,146 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Puja Guide — Kolkata Durga Puja pandal map</title>
-<meta name="description" content="280 Durga Puja pandals across Kolkata on a 3D map, each with its nearest metro, the walk from the station, the pujas within a few minutes of it, and live queue reports from visitors.">
+<title>PujaHop Kolkata — Kolkata Durga Puja pandal map</title>
+<meta name="description" content="296 Durga Puja pandals across Kolkata on a 3D map, each with its nearest metro, the walk from the station, the pujas within a few minutes of it, and live queue reports from visitors.">
 <link rel="canonical" href="/">
 <!-- Bump ?v= on app.js and style.css whenever they change: an older
      service worker on a visitor's phone is cache-first, and a new URL is the
      one thing that always reaches the network. -->
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="#7b1f18">
+<meta name="color-scheme" content="light dark">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/icon.svg">
 <link rel="preconnect" href="https://tiles.openfreemap.org" crossorigin>
 <link rel="stylesheet" href="/vendor/maplibre-gl.css?v=4.7.1">
-<link rel="stylesheet" href="/style.css?v=10">
+<link rel="stylesheet" href="/style.css?v=18">
+<link rel="stylesheet" href="/preloader.css?v=1">
+<!-- Pick up a saved theme before the first paint, so a returning visitor never
+     sees a flash of the wrong background. Inline and classic on purpose: it
+     has to run before anything renders, and it is the only inline script here. -->
+<script>try{if(localStorage.getItem('pujahop.theme')==='dark')document.documentElement.setAttribute('data-theme','dark')}catch(e){}</script>
 </head>
 <body>
+<noscript><style>#ph-preloader{display:none !important}</style></noscript>
+
+<!-- Cinematic intro preloader: pure CSS + inline SVG, no network, no build.
+     Hidden from the first paint onward only after it has played once per
+     session (see preloader.js). Scoped to #ph-preloader so it cannot leak
+     into the app's own styles or the map. -->
+<div id="ph-preloader" class="ph-intro" role="dialog" aria-modal="true" aria-label="PujaHop Kolkata is loading">
+  <div class="ph-intro-sky" aria-hidden="true">
+    <div class="ph-alpana ph-alpana-a">
+      <svg viewBox="0 0 400 400" aria-hidden="true">
+        <defs>
+          <linearGradient id="phGoldA" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#ffe9b0"/>
+            <stop offset=".5" stop-color="#e8b73c"/>
+            <stop offset="1" stop-color="#a86e12"/>
+          </linearGradient>
+          <path id="phPetalA" d="M200 44 C214 92 214 134 200 158 C186 134 186 92 200 44 Z"/>
+        </defs>
+        <g fill="none" stroke="url(#phGoldA)" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="200" cy="200" r="192" stroke-width="1" opacity=".55"/>
+          <circle cx="200" cy="200" r="170" stroke-width="1" stroke-dasharray="1.5 9"/>
+          <circle cx="200" cy="200" r="124" stroke-width="1.1" opacity=".8"/>
+          <g stroke-width=".9" opacity=".6">
+            <use href="#phPetalA"/>
+            <use href="#phPetalA" transform="rotate(30 200 200)"/>
+            <use href="#phPetalA" transform="rotate(60 200 200)"/>
+            <use href="#phPetalA" transform="rotate(90 200 200)"/>
+            <use href="#phPetalA" transform="rotate(120 200 200)"/>
+            <use href="#phPetalA" transform="rotate(150 200 200)"/>
+            <use href="#phPetalA" transform="rotate(180 200 200)"/>
+            <use href="#phPetalA" transform="rotate(210 200 200)"/>
+            <use href="#phPetalA" transform="rotate(240 200 200)"/>
+            <use href="#phPetalA" transform="rotate(270 200 200)"/>
+            <use href="#phPetalA" transform="rotate(300 200 200)"/>
+            <use href="#phPetalA" transform="rotate(330 200 200)"/>
+          </g>
+          <circle cx="200" cy="200" r="74" stroke-width="1.1" opacity=".85"/>
+        </g>
+      </svg>
+    </div>
+    <div class="ph-alpana ph-alpana-b">
+      <svg viewBox="0 0 400 400" aria-hidden="true">
+        <defs>
+          <linearGradient id="phGoldB" x1="1" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#ffe9b0"/>
+            <stop offset=".5" stop-color="#e8b73c"/>
+            <stop offset="1" stop-color="#a86e12"/>
+          </linearGradient>
+          <path id="phPetalB" d="M200 60 C210 96 210 128 200 148 C190 128 190 96 200 60 Z"/>
+        </defs>
+        <g fill="none" stroke="url(#phGoldB)" stroke-linecap="round">
+          <circle cx="200" cy="200" r="150" stroke-width="1" stroke-dasharray="2 8" opacity=".7"/>
+          <g stroke-width=".8" opacity=".75">
+            <use href="#phPetalB"/>
+            <use href="#phPetalB" transform="rotate(45 200 200)"/>
+            <use href="#phPetalB" transform="rotate(90 200 200)"/>
+            <use href="#phPetalB" transform="rotate(135 200 200)"/>
+            <use href="#phPetalB" transform="rotate(180 200 200)"/>
+            <use href="#phPetalB" transform="rotate(225 200 200)"/>
+            <use href="#phPetalB" transform="rotate(270 200 200)"/>
+            <use href="#phPetalB" transform="rotate(315 200 200)"/>
+          </g>
+        </g>
+      </svg>
+    </div>
+    <div class="ph-emblem">
+      <span class="ph-emblem-halo" aria-hidden="true"></span>
+      <svg class="ph-emblem-svg" viewBox="0 0 200 200" role="img" aria-label="Gleaming Durga emblem">
+        <defs>
+          <linearGradient id="phGoldC" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#fff3cf"/>
+            <stop offset=".45" stop-color="#e8b73c"/>
+            <stop offset="1" stop-color="#a86e12"/>
+          </linearGradient>
+          <radialGradient id="phGlowC" cx="50%" cy="46%" r="50%">
+            <stop offset="0" stop-color="rgba(255,203,96,.6)"/>
+            <stop offset="1" stop-color="rgba(255,203,96,0)"/>
+          </radialGradient>
+          <path id="phPetalC" d="M100 24 C115 54 115 88 100 110 C85 88 85 54 100 24 Z"/>
+        </defs>
+        <circle cx="100" cy="100" r="84" fill="url(#phGlowC)" class="ph-halo"/>
+        <g fill="none" stroke="url(#phGoldC)" stroke-width="1.3" stroke-linejoin="round" opacity=".9">
+          <use href="#phPetalC"/>
+          <use href="#phPetalC" transform="rotate(45 100 100)"/>
+          <use href="#phPetalC" transform="rotate(90 100 100)"/>
+          <use href="#phPetalC" transform="rotate(135 100 100)"/>
+          <use href="#phPetalC" transform="rotate(180 100 100)"/>
+          <use href="#phPetalC" transform="rotate(225 100 100)"/>
+          <use href="#phPetalC" transform="rotate(270 100 100)"/>
+          <use href="#phPetalC" transform="rotate(315 100 100)"/>
+        </g>
+        <g class="ph-trishul" fill="none" stroke="url(#phGoldC)" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="100" cy="100" r="31" stroke-width="1.1" opacity=".65"/>
+          <path d="M100 136 L100 76"/>
+          <path d="M100 76 L100 60"/>
+          <path d="M100 84 C88 80 82 69 82 57 C90 64 96 66 100 67"/>
+          <path d="M100 84 C112 80 118 69 118 57 C110 64 104 66 100 67"/>
+        </g>
+      </svg>
+    </div>
+    <div class="ph-particles"></div>
+  </div>
+
+  <div class="ph-intro-brand">
+    <p class="ph-intro-om" aria-hidden="true">ॐ</p>
+    <p class="ph-intro-title">PujaHop <span>Kolkata</span></p>
+    <p class="ph-intro-sub">Durga Puja 2026 &middot; the pandal map</p>
+  </div>
+
+  <button type="button" id="ph-skip" class="ph-skip">Skip Intro</button>
+</div>
+
 <a class="skip" href="#list">Skip to the pandal list</a>
 
 <header class="top">
   <a class="brand" href="/">
-    <span class="brand-mark" aria-hidden="true">পূ</span>
-    <span class="brand-text">Puja&nbsp;Guide<small>Durga Puja 2026 · Kolkata</small></span>
+    <span class="brand-mark" aria-hidden="true">ॐ</span>
+    <span class="brand-text">PujaHop&nbsp;Kolkata<small>Durga Puja 2026 · Kolkata</small></span>
   </a>
 
   <form class="search" role="search" id="search-form">
@@ -33,6 +151,8 @@
     <button type="button" id="q-clear" class="q-clear" hidden aria-label="Clear search">×</button>
     <ul id="suggest" class="suggest" hidden role="listbox" aria-label="Suggestions"></ul>
   </form>
+  <button id="language-toggle" class="btn ghost small" type="button" aria-label="Switch interface language">বাংলা</button>
+  <button id="theme-toggle" class="btn ghost small" type="button" aria-pressed="false" aria-label="Switch to the dark theme" title="Switch between the bright and dark themes">Dark</button>
 
   <nav class="mainnav" aria-label="Sections">
     <a href="/" data-nav="map">Map</a>
@@ -41,29 +161,40 @@
     <a href="/metro" data-nav="metro">Metro</a>
     <a href="/routes" data-nav="routes">Routes</a>
     <a href="/guide" data-nav="guide">Guide</a>
+    <a href="/help" data-nav="help">Help</a>
   </nav>
 
   <div class="top-actions">
     <button id="near-me" class="btn ghost" type="button" title="Sort the whole catalogue by how far you actually are">Near me</button>
     <button id="plan-open" class="btn primary" type="button">Make a route <span id="plan-count" class="pill" hidden>0</span></button>
-    <button id="menu-toggle" class="btn ghost only-mobile" type="button" aria-label="Menu">≡</button>
+    <button id="menu-toggle" class="btn ghost" type="button" aria-label="Open navigation" aria-expanded="false" aria-controls="nav-drawer">≡</button>
   </div>
 </header>
 
 <div id="offline-bar" class="offline-bar" hidden>You are offline. The map you already opened and your saved routes still work.</div>
 
 <main class="layout" id="layout">
-  <section class="panel" id="panel" aria-label="Pandals">
+  <section class="panel" id="panel" data-sheet="collapsed" aria-label="Pandals">
     <div class="panel-head">
-      <button id="panel-toggle" class="panel-toggle" type="button" aria-expanded="true">
-        <span class="chev" aria-hidden="true">⌄</span>
-        <span id="panel-toggle-label">Hide title, sort and filters</span>
+      <button id="panel-toggle" class="panel-toggle" type="button" aria-expanded="false" aria-controls="list" aria-label="Expand pandal results">
+        <span class="drag-handle" aria-hidden="true"></span>
+        <span id="panel-toggle-label">Pandels List ↓</span>
       </button>
+      <div class="view-toggle" role="group" aria-label="Choose map or list view">
+        <button id="view-map" type="button" aria-pressed="true">Map</button>
+        <button id="view-list" type="button" aria-pressed="false">List</button>
+      </div>
       <div id="panel-title-block">
         <p class="eyebrow" id="panel-eyebrow">All pandals</p>
         <h1 id="panel-title">Kolkata Durga Puja pandal map</h1>
       </div>
       <div class="panel-tools">
+        <label class="field location-field">
+          <span id="location-label">Change location</span>
+          <select id="location-select" aria-label="Change location">
+            <option value="">All Kolkata</option>
+          </select>
+        </label>
         <label class="field">
           <span>Sort</span>
           <select id="sort">
@@ -87,7 +218,10 @@
           </select>
         </label>
       </div>
-      <div class="chips" id="chips" role="group" aria-label="Filters"></div>
+      <details class="filter-disclosure">
+        <summary id="filter-summary">Filter pandals</summary>
+        <div class="chips" id="chips" role="group" aria-label="Filter pandals"></div>
+      </details>
       <p class="count" id="count"></p>
     </div>
     <ol class="list" id="list"></ol>
@@ -101,7 +235,6 @@
   <section class="mapwrap" aria-label="Map">
     <div id="map"></div>
     <div class="map-overlay">
-      <div class="map-legend" id="line-legend" hidden></div>
       <div class="map-legend" id="map-legend" hidden>
         <strong>Crowd</strong>
         <span><i class="dot easy"></i>Easy</span>
@@ -110,10 +243,12 @@
         <span class="faint">Reports fade after 90 minutes</span>
       </div>
       <div class="map-tools">
-        <button id="map-lines" class="btn ghost small" type="button" aria-pressed="true" title="Metro lines">Lines</button>
-        <button id="map-3d" class="btn ghost small" type="button" aria-pressed="true">3D</button>
-        <button id="map-fit" class="btn ghost small" type="button">Fit all</button>
-        <button id="map-locate" class="btn ghost small" type="button">My location</button>
+        <button id="map-locate" class="map-control" type="button" aria-label="My location" title="My location">◎</button>
+        <button id="map-zoom-in" class="map-control" type="button" aria-label="Zoom in" title="Zoom in">+</button>
+        <button id="map-zoom-out" class="map-control" type="button" aria-label="Zoom out" title="Zoom out">−</button>
+        <button id="map-fit" class="map-control map-control-label" type="button" aria-label="Fit all pandals" title="Fit all pandals">Fit</button>
+        <button id="map-3d" class="map-control map-control-label" type="button" aria-pressed="true" aria-label="Toggle 3D view" title="Toggle 3D view">3D</button>
+        <button id="map-lines" class="map-control map-control-label" type="button" aria-pressed="true" aria-controls="metro-drawer">Metro</button>
       </div>
     </div>
     <div class="map-credit">
@@ -125,6 +260,31 @@
     </div>
   </section>
 </main>
+
+<div id="drawer-backdrop" class="drawer-backdrop" hidden></div>
+<aside class="side-drawer nav-drawer" id="nav-drawer" hidden aria-label="Navigation" aria-modal="true" role="dialog">
+  <header class="drawer-head">
+    <h2>Explore PujaHop Kolkata</h2>
+    <button class="btn ghost small drawer-close" type="button" aria-label="Close navigation">×</button>
+  </header>
+  <nav class="drawer-nav" aria-label="Main navigation">
+    <a href="/">Map</a>
+    <a href="/pandals">Pandal directory</a>
+    <a href="/metro">Metro lines</a>
+    <a href="/routes">Route planner</a>
+    <a href="/guide">Guide</a>
+    <a href="/help">Emergency &amp; help</a>
+    <a href="/about">About</a>
+    <button id="nav-filters" type="button">Filters</button>
+  </nav>
+</aside>
+<aside class="side-drawer metro-drawer" id="metro-drawer" hidden aria-label="Metro line layers" aria-modal="true" role="dialog">
+  <header class="drawer-head">
+    <h2>Metro lines</h2>
+    <button class="btn ghost small drawer-close" type="button" aria-label="Close metro layers">×</button>
+  </header>
+  <div id="metro-line-options" class="metro-line-options"></div>
+</aside>
 
 <aside class="page" id="page" hidden aria-live="polite">
   <div class="page-inner" id="page-inner"></div>
@@ -142,7 +302,8 @@
 
 <div class="toast" id="toast" hidden></div>
 
+<script src="/preloader.js?v=1"></script>
 <script src="/vendor/maplibre-gl.js?v=4.7.1"></script>
-<script type="module" src="/app.js?v=10"></script>
+<script type="module" src="/app.js?v=18"></script>
 </body>
 </html>

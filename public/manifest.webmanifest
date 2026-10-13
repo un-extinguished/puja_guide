@@ -1,7 +1,7 @@
 {
-  "name": "Puja Guide — Kolkata Durga Puja pandal map",
-  "short_name": "Puja Guide",
-  "description": "280 Durga Puja pandals across Kolkata, each with its nearest metro, the walk from the station, walking routes and live queue reports.",
+  "name": "PujaHop Kolkata — Kolkata Durga Puja pandal map",
+  "short_name": "PujaHop Kolkata",
+  "description": "296 Durga Puja pandals across Kolkata, each with its nearest metro, the walk from the station, walking routes and live queue reports.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

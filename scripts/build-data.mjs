@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const RAW = path.join(ROOT, 'data', 'raw');
 const OUT = path.join(ROOT, 'data');
+const VIP_FILE = path.join(ROOT, 'data', 'vip-list.json');
 
 /* ------------------------------------------------------------------ zones */
 const ZONES = {
@@ -144,7 +145,28 @@ for (const f of fs.readdirSync(RAW).filter((f) => f.endsWith('.jsonl')).sort()) 
     rows.push({ ...r, _src: f });
   }
 }
-console.log(`read ${rows.length} rows from data/raw`);
+const placeholderRows = rows.filter((r) => /^Completeness Pally \d+$/i.test(r.n || ''));
+if (placeholderRows.length) {
+  throw new Error(
+    `${placeholderRows.length} unverified "Completeness Pally N" placeholder(s) found in raw data. ` +
+    'Keep them in data/archive/unverified-completeness-pally.jsonl until their official names and locations are verified.'
+  );
+}
+const rawRowCount = rows.length;
+const upstreamRowCount = rows.filter((r) => r.g !== 'community-report').length;
+const archiveFile = path.join(ROOT, 'data', 'archive', 'unverified-completeness-pally.jsonl');
+const archivedRows = fs.readFileSync(archiveFile, 'utf8')
+  .split('\n')
+  .map((line) => line.trim())
+  .filter(Boolean)
+  .map((line) => JSON.parse(line));
+if (archivedRows.some((r) => !/^Completeness Pally \d+$/i.test(r.n || ''))) {
+  throw new Error(`${archiveFile} contains a row that is not a Completeness Pally placeholder.`);
+}
+console.log(
+  `read ${rawRowCount} rows from data/raw (${upstreamRowCount} published, ` +
+  `${rawRowCount - upstreamRowCount} community); kept ${archivedRows.length} unverified archive rows out of the catalogue`
+);
 
 /* --------------------------------------------------------------- dedupe */
 /* The upstream file carries a second pass of rows over ground already
@@ -161,6 +183,27 @@ const richer = (a, b) => {
 
 const kept = [];
 let merged = 0;
+
+/* A couple of upstream rows name the same puja a different way — one carries a
+   locality prefix, the other an abbreviated suffix — and the heuristic below
+   cannot see the pair. Fold the alias row into the canonical one up front, so
+   the puja is listed once and keeps any field only the alias row had. */
+const KNOWN_VARIANTS = new Map([
+  ['kidderpore 25 pally', '25 palli'],
+  ['padmapukur youth assn', 'paddapukur youth association'],
+]);
+for (const [aliasName, canonicalName] of KNOWN_VARIANTS) {
+  const aliasRow = rows.find((r) => norm(r.n) === aliasName);
+  const keepRow = rows.find((r) => norm(r.n) === canonicalName);
+  if (!aliasRow || !keepRow) continue;
+  for (const key of ['b', 'k', 'f', 'h', 's', 'm', 'd', 'g']) {
+    if (keepRow[key] == null && aliasRow[key] != null) keepRow[key] = aliasRow[key];
+  }
+  keepRow.k = [keepRow.k, aliasRow.n].filter(Boolean).join('; ');
+  rows.splice(rows.indexOf(aliasRow), 1);
+  merged++;
+}
+
 for (const r of rows) {
   const nr = norm(r.n);
   const hit = kept.find((k) => {
@@ -215,6 +258,20 @@ function areaOf(p) {
 }
 
 /* ------------------------------------------------------------- assemble */
+/* data/vip-list.json is the owner's pass list — the source of truth for VIP
+   membership. Each entry names a real puja and points at the catalogue slug
+   that should carry it; the build only marks a record isVIP when the slug
+   actually resolves, and keeps review entries distinct so the app can say
+   when a pin still needs a human check. */
+const vipList = JSON.parse(fs.readFileSync(VIP_FILE, 'utf8'));
+const vipBySlug = new Map();
+const vipEntries = ['south', 'north'].flatMap((zone) =>
+  (vipList[zone] || []).map((entry) => {
+    if (entry.slug) vipBySlug.set(entry.slug, { zone, review: entry.status === 'review' });
+    return { ...entry, zone };
+  })
+);
+
 const usedSlugs = new Map();
 const pandals = kept.map((p) => {
   const area = areaOf(p);
@@ -250,6 +307,7 @@ const pandals = kept.map((p) => {
       approximate: !['verified', 'osm'].includes(p.g),
       community: p.g === 'community-report',
     },
+    ...(p._reviewStatus ? { reviewStatus: p._reviewStatus } : {}),
     /* a row added from a visitor report carries no published walk, so it is
        left empty here and filled in below from the solved station positions */
     nearestMetro: p.g === 'community-report' ? null : {
@@ -258,6 +316,9 @@ const pandals = kept.map((p) => {
       walkMeters: p.d,
     },
     aliases: p.dupNames ? [...new Set(p.dupNames.filter((n) => n !== p.n))] : [],
+    ...(vipBySlug.has(slug)
+      ? { isVIP: true, ...(vipBySlug.get(slug).review ? { vipReview: true } : {}) }
+      : {}),
   };
 });
 
@@ -636,8 +697,12 @@ const meta = {
   stationWalkResidualMedian: fits[Math.floor(fits.length / 2)],
   routeCount: routes.length,
   photoCount: photoCount,
-  upstreamRows: rows.length,
+  upstreamRows: upstreamRowCount,
   mergedRows: merged,
+  vipCount: pandals.filter((p) => p.isVIP).length,
+  vipSouthCount: vipEntries.filter((e) => e.zone === 'south' && e.slug).length,
+  vipNorthCount: vipEntries.filter((e) => e.zone === 'north' && e.slug).length,
+  vipMissingCount: vipEntries.filter((e) => !e.slug).length,
   source: 'Reconstructed from the ODbL dataset published at https://www.pujomap.com/data/pandals.json',
   licence: 'ODbL 1.0 — © OpenStreetMap contributors',
   derivedFields: [
@@ -650,6 +715,7 @@ const meta = {
     'lines[].coordinates (drawn through published station coordinates, not surveyed)',
     'photo.fromPinMeters / photo.corroborates (photograph GPS measured against our pin)',
     'nearestMetro.estimated (true where a pandal had no published walk)',
+    'isVIP / vipReview (from data/vip-list.json — the owner\'s pass list)',
   ],
 };
 

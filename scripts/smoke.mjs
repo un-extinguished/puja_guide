@@ -11,7 +11,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const read = (p) => fs.readFileSync(path.join(ROOT, p), 'utf8');
@@ -47,6 +47,7 @@ globalThis.document = {
 };
 globalThis.window = {
   addEventListener: (ev, cb) => { (windowListeners[ev] ||= []).push(cb); },
+  requestAnimationFrame: (cb) => setTimeout(cb, 0),
   location: { pathname: '/', search: '', origin: 'http://localhost', href: 'http://localhost/' },
   innerWidth: 1280,
   matchMedia: () => ({ matches: false, addEventListener() {}, removeEventListener() {} }),
@@ -72,7 +73,7 @@ globalThis.fetch = async (url) => {
   const u = String(url);
   calls.push(u);
   if (u.startsWith('/data/')) {
-    return { ok: true, json: async () => JSON.parse(read(u)) };
+    return { ok: true, json: async () => JSON.parse(read(u.split('?')[0])) };
   }
   if (u.includes('/api/crowd/summary')) return { ok: true, json: async () => ({ summary: { 'bagbazar-sarbojanin': { level: 'busy', at: Date.now(), note: 'test', count: 1 } } }) };
   if (u.includes('/api/crowd')) return { ok: true, status: 200, json: async () => ({ reports: [{ slug: 'bagbazar-sarbojanin', level: 'busy', at: Date.now() }] }) };
@@ -87,7 +88,7 @@ globalThis.maplibregl = {
     addLayer(def) { if (!def || !def.id) throw new Error('layer without id'); if (def.source && !this._sources.has(def.source)) throw new Error(`layer ${def.id} refers to missing source ${def.source}`); }
     getSource(id) { return { setData() {} }; }
     setFilter() {}
-    flyTo() {} fitBounds() {} easeTo() {}
+    flyTo() {} fitBounds() {} easeTo() {} resize() {}
     getZoom() { return 12; }
     getCanvas() { return { style: {} }; }
   },
@@ -101,7 +102,7 @@ const fail = (msg) => { failures++; console.log('  ✗ ' + msg); };
 const ok = (msg) => console.log('  ✓ ' + msg);
 
 console.log('loading public/app.js against the stub DOM…');
-await import(path.join(ROOT, 'public/app.js'));
+await import(pathToFileURL(path.join(ROOT, 'public/app.js')).href);
 for (const cb of windowListeners.DOMContentLoaded || []) cb();
 await new Promise((r) => setTimeout(r, 200));
 ok(`boot() ran (${calls.length} fetches: ${[...new Set(calls)].join(', ')})`);
@@ -144,6 +145,7 @@ const pageViews = [
   ['metro detail', `/metro/${JSON.parse(read('data/stations.json'))[0].slug}`],
   ['area detail', '/area/north-kolkata'],
   ['guide', '/guide'],
+  ['emergency and help', '/help'],
   ['live', '/live'],
   ['about', '/about'],
   ['legal', '/legal'],
@@ -182,6 +184,71 @@ try {
    The metro lines are drawn straight from these numbers, so check them here
    rather than trusting the app to notice. A [lat, lon] slip puts the whole
    network in the sea, which is exactly what happened once. */
+console.log('\npandal location evidence');
+try {
+  const pandals = JSON.parse(read('data/pandals.json'));
+  const archived = read('data/archive/unverified-completeness-pally.jsonl')
+    .trim().split(/\r?\n/).filter(Boolean).map(JSON.parse);
+  const placeholder = /^Completeness Pally \d+$/i;
+  const activePlaceholders = pandals.filter((p) => placeholder.test(p.name));
+  const invalidArchiveRows = archived.filter((p) => !placeholder.test(p.n || ''));
+  if (activePlaceholders.length) fail(`${activePlaceholders.length} placeholder pandal(s) remain active`);
+  else ok(`no Completeness Pally placeholders remain in the ${pandals.length}-pandal active catalogue`);
+  if (archived.length !== 70 || invalidArchiveRows.length) {
+    fail(`expected 70 archived placeholder rows, found ${archived.length - invalidArchiveRows.length} valid archive rows`);
+  } else {
+    ok(`all 70 unverified placeholder rows are preserved in the archive`);
+  }
+  const photos = JSON.parse(read('data/photos.json')).photos;
+  const kashi = pandals.find((p) => p.slug === 'kashi-bose-lane');
+  const gps = photos['kashi-bose-lane']?.gps;
+  if (!kashi || !gps) fail('Kashi Bose Lane or its GPS-tagged photograph is missing');
+  else {
+    const r = Math.PI / 180;
+    const dLat = (gps[0] - kashi.lat) * r, dLon = (gps[1] - kashi.lon) * r;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(kashi.lat * r) * Math.cos(gps[0] * r) * Math.sin(dLon / 2) ** 2;
+    const meters = 2 * 6371000 * Math.asin(Math.sqrt(a));
+    if (meters > 10) fail(`Kashi Bose Lane pin is ${Math.round(meters)} m from its GPS evidence`);
+    else ok(`Kashi Bose Lane pin is ${Math.round(meters)} m from its GPS-tagged photograph`);
+  }
+  const outsideKolkata = pandals.filter((p) => p.lat < 22.3 || p.lat > 22.8 || p.lon < 88.1 || p.lon > 88.7);
+  if (outsideKolkata.length) fail(`${outsideKolkata.length} pandal pin(s) fall outside the broad Kolkata bounds`);
+  else ok(`all ${pandals.length} pandal coordinates fall within broad Kolkata bounds`);
+} catch (err) {
+  fail(`could not check pandal location evidence: ${err.message}`);
+}
+
+console.log('\nthe VIP pass list and the isVIP field');
+try {
+  const pandals = JSON.parse(read('data/pandals.json'));
+  const meta = JSON.parse(read('data/meta.json'));
+  const vipList = JSON.parse(read('data/vip-list.json'));
+  const entries = [
+    ...(vipList.south || []).map((e) => ({ ...e, zone: 'south' })),
+    ...(vipList.north || []).map((e) => ({ ...e, zone: 'north' })),
+  ];
+  const withSlug = entries.filter((e) => e.slug);
+  const vipRecords = pandals.filter((p) => p.isVIP);
+  const vipSlugs = new Set(withSlug.map((e) => e.slug));
+  const stray = vipRecords.filter((p) => !vipSlugs.has(p.slug));
+  const missing = entries.filter((e) => !e.slug).map((e) => `${e.zone}/${e.name}`);
+  if (entries.length !== 54) fail(`the VIP list has ${entries.length} entries, expected 54`);
+  else ok(`the VIP list carries all 54 of the owner's pass pandals (${withSlug.length} assigned)`);
+  if (meta.vipCount !== vipRecords.length) fail(`meta says ${meta.vipCount} VIP pandals but the catalogue has ${vipRecords.length}`);
+  else ok(`meta and catalogue agree: ${meta.vipCount} VIP pandals (${meta.vipSouthCount} south + ${meta.vipNorthCount} north)`);
+  if (stray.length) fail(`${stray.length} record(s) are marked isVIP without being on the pass list: ${stray.map((p) => p.slug).join(', ')}`);
+  else ok('every isVIP record traces back to the pass list');
+  if (new Set(vipRecords.map((p) => p.name)).size !== vipRecords.length) fail('duplicate pandal names among the VIP records');
+  else ok(`no repeated names among the ${vipRecords.length} VIP records`);
+  if (missing.length) {
+    console.log(`  · ${missing.length} listed pandals have no catalogue record yet (flagged for manual addition, not fabricated): ${missing.join('; ')}`);
+  } else {
+    ok('every listed pandal resolves to a catalogue record');
+  }
+} catch (err) {
+  fail(`could not check the VIP list: ${err.message}`);
+}
+
 console.log('\nthe metro lines in data/lines.json');
 try {
   const lines = JSON.parse(read('data/lines.json'));

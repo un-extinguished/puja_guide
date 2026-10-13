@@ -1,0 +1,750 @@
+{
+  "fetchedAt": "2026-10-13T12:40:43.267Z",
+  "source": "https://pujamap.com/puja-pandel-list/ (embedded widget, extracted via WP REST API page 239)",
+  "note": "The site exposes exactly this one catalogue widget: names, a locality word, and 4-decimal coordinates. There are no per-pandal detail pages and no map pins beyond these values.",
+  "count": 74,
+  "southCount": 42,
+  "northCount": 32,
+  "pandals": [
+    {
+      "id": 1,
+      "name": "Ekdalia Evergreen Club",
+      "nameBn": "একডালিয়া এভারগ্রিন ক্লাব",
+      "area": "south",
+      "address": "Gariahat",
+      "addressBn": "গড়িয়াহাট",
+      "lat": 22.505,
+      "lng": 88.35
+    },
+    {
+      "id": 2,
+      "name": "Bosepukur Sitala Mandir",
+      "nameBn": "বোসপুকুর শীতলা মন্দির",
+      "area": "south",
+      "address": "Kasba",
+      "addressBn": "কসবা",
+      "lat": 22.527,
+      "lng": 88.347
+    },
+    {
+      "id": 3,
+      "name": "Suruchi Sangha",
+      "nameBn": "সুরুচি সংঘ",
+      "area": "south",
+      "address": "New Alipore",
+      "addressBn": "নিউ আলিপুর",
+      "lat": 22.52,
+      "lng": 88.325
+    },
+    {
+      "id": 4,
+      "name": "Badamtala Ashar Sangha",
+      "nameBn": "বাদামতলা আশার সংঘ",
+      "area": "south",
+      "address": "Kalighat",
+      "addressBn": "কালীঘাট",
+      "lat": 22.515,
+      "lng": 88.345
+    },
+    {
+      "id": 5,
+      "name": "Jodhpur Park",
+      "nameBn": "যোধপুর পার্ক",
+      "area": "south",
+      "address": "Jodhpur Park",
+      "addressBn": "যোধপুর পার্ক",
+      "lat": 22.525,
+      "lng": 88.345
+    },
+    {
+      "id": 6,
+      "name": "Hindusthan Park",
+      "nameBn": "হিন্দুস্থান পার্ক",
+      "area": "south",
+      "address": "Hindusthan Park",
+      "addressBn": "হিন্দুস্থান পার্ক",
+      "lat": 22.534,
+      "lng": 88.355
+    },
+    {
+      "id": 7,
+      "name": "Singhi Park",
+      "nameBn": "সিংহি পার্ক",
+      "area": "south",
+      "address": "Singhi Park",
+      "addressBn": "সিংহি পার্ক",
+      "lat": 22.528,
+      "lng": 88.348
+    },
+    {
+      "id": 8,
+      "name": "Tridhara Sammilani",
+      "nameBn": "ত্রিধারা সম্মিলনী",
+      "area": "south",
+      "address": "Tridhara",
+      "addressBn": "ত্রিধারা",
+      "lat": 22.532,
+      "lng": 88.34
+    },
+    {
+      "id": 9,
+      "name": "Maddox Square",
+      "nameBn": "ম্যাডক্স স্কোয়ার",
+      "area": "south",
+      "address": "Maddox Square",
+      "addressBn": "ম্যাডক্স স্কোয়ার",
+      "lat": 22.535,
+      "lng": 88.352
+    },
+    {
+      "id": 10,
+      "name": "Deshapriya Park",
+      "nameBn": "দেশপ্রিয় পার্ক",
+      "area": "south",
+      "address": "Deshapriya Park",
+      "addressBn": "দেশপ্রিয় পার্ক",
+      "lat": 22.525,
+      "lng": 88.345
+    },
+    {
+      "id": 11,
+      "name": "Baghajatin Cultural",
+      "nameBn": "বাগলগঞ্জ কালচারাল",
+      "area": "south",
+      "address": "Baghajatin",
+      "addressBn": "বাগলগঞ্জ",
+      "lat": 22.53,
+      "lng": 88.349
+    },
+    {
+      "id": 12,
+      "name": "Garfa Park",
+      "nameBn": "গড়ফা পার্ক",
+      "area": "south",
+      "address": "Garfa",
+      "addressBn": "গড়ফা",
+      "lat": 22.532,
+      "lng": 88.352
+    },
+    {
+      "id": 13,
+      "name": "Ballygunge Garden",
+      "nameBn": "বালিগঞ্জ গার্ডেন",
+      "area": "south",
+      "address": "Ballygunge",
+      "addressBn": "বালিগঞ্জ",
+      "lat": 22.536,
+      "lng": 88.358
+    },
+    {
+      "id": 14,
+      "name": "Dhakuria 22 Palli",
+      "nameBn": "ঢাকুরিয়া ২২ পল্লী",
+      "area": "south",
+      "address": "Dhakuria",
+      "addressBn": "ঢাকুরিয়া",
+      "lat": 22.538,
+      "lng": 88.36
+    },
+    {
+      "id": 15,
+      "name": "Dhakuria 23 Palli",
+      "nameBn": "ঢাকুরিয়া ২৩ পল্লী",
+      "area": "south",
+      "address": "Dhakuria",
+      "addressBn": "ঢাকুরিয়া",
+      "lat": 22.54,
+      "lng": 88.363
+    },
+    {
+      "id": 16,
+      "name": "Dhakuria 61 Palli",
+      "nameBn": "ঢাকুরিয়া ৬১ পল্লী",
+      "area": "south",
+      "address": "Dhakuria",
+      "addressBn": "ঢাকুরিয়া",
+      "lat": 22.542,
+      "lng": 88.366
+    },
+    {
+      "id": 17,
+      "name": "Dhakuria 66 Palli",
+      "nameBn": "ঢাকুরিয়া ৬৬ পল্লী",
+      "area": "south",
+      "address": "Dhakuria",
+      "addressBn": "ঢাকুরিয়া",
+      "lat": 22.544,
+      "lng": 88.369
+    },
+    {
+      "id": 18,
+      "name": "Golpark",
+      "nameBn": "গোলপার্ক",
+      "area": "south",
+      "address": "Golpark",
+      "addressBn": "গোলপার্ক",
+      "lat": 22.546,
+      "lng": 88.372
+    },
+    {
+      "id": 19,
+      "name": "Shib Mandir Palli",
+      "nameBn": "শিব মন্দির পল্লী",
+      "area": "south",
+      "address": "Golpark",
+      "addressBn": "গোলপার্ক",
+      "lat": 22.548,
+      "lng": 88.375
+    },
+    {
+      "id": 20,
+      "name": "Beleghata Park",
+      "nameBn": "বেলতলা পার্ক",
+      "area": "south",
+      "address": "Rasbehari",
+      "addressBn": "রাসবিহারী",
+      "lat": 22.55,
+      "lng": 88.378
+    },
+    {
+      "id": 21,
+      "name": "Baghajatin Colony",
+      "nameBn": "বাঘাযতীন কলোনি",
+      "area": "south",
+      "address": "Baghajatin",
+      "addressBn": "বাঘাযতীন",
+      "lat": 22.52,
+      "lng": 88.34
+    },
+    {
+      "id": 22,
+      "name": "Ramnagar Sarbojanin",
+      "nameBn": "রামনগর সর্বজনীন",
+      "area": "south",
+      "address": "Ramnagar",
+      "addressBn": "রামনগর",
+      "lat": 22.515,
+      "lng": 88.338
+    },
+    {
+      "id": 23,
+      "name": "Naktala Udayan Palli",
+      "nameBn": "নাকতলা উদয়ন পল্লী",
+      "area": "south",
+      "address": "Naktala",
+      "addressBn": "নাকতলা",
+      "lat": 22.51,
+      "lng": 88.335
+    },
+    {
+      "id": 24,
+      "name": "Bikrampur Club",
+      "nameBn": "বিক্রমপুর ক্লাব",
+      "area": "south",
+      "address": "Bikrampur",
+      "addressBn": "বিক্রমপুর",
+      "lat": 22.505,
+      "lng": 88.332
+    },
+    {
+      "id": 25,
+      "name": "Rajar bag Club",
+      "nameBn": "রাজারবাগ ক্লাব",
+      "area": "south",
+      "address": "Rajar bag",
+      "addressBn": "রাজারবাগ",
+      "lat": 22.5,
+      "lng": 88.33
+    },
+    {
+      "id": 26,
+      "name": "Kanakpaga Sarbojanin",
+      "nameBn": "কণকপাগা সর্বজনীন",
+      "area": "south",
+      "address": "Kanakpaga",
+      "addressBn": "কণকপাগা",
+      "lat": 22.495,
+      "lng": 88.328
+    },
+    {
+      "id": 27,
+      "name": "Lalmohan Smriti Palli",
+      "nameBn": "লালমোহন স্মৃতি পল্লী",
+      "area": "south",
+      "address": "Lalmohan",
+      "addressBn": "লালমোহন",
+      "lat": 22.49,
+      "lng": 88.326
+    },
+    {
+      "id": 28,
+      "name": "Juhar Abasan Palli",
+      "nameBn": "জুহর আবাসন পল্লী",
+      "area": "south",
+      "address": "Juhar Abasan",
+      "addressBn": "জুহর আবাসন",
+      "lat": 22.485,
+      "lng": 88.324
+    },
+    {
+      "id": 29,
+      "name": "Bandhagobhar Sarbojanin",
+      "nameBn": "বন্ধগবহার সর্বজনীন",
+      "area": "south",
+      "address": "Bandhagobhar",
+      "addressBn": "বন্ধগবহার",
+      "lat": 22.48,
+      "lng": 88.322
+    },
+    {
+      "id": 30,
+      "name": "Shagi Nagar Sangha",
+      "nameBn": "শাগি নগর সংঘ",
+      "area": "south",
+      "address": "Shagi Nagar",
+      "addressBn": "শাগি নগর",
+      "lat": 22.475,
+      "lng": 88.32
+    },
+    {
+      "id": 31,
+      "name": "Ragbagi Palli",
+      "nameBn": "রাগবাগি পল্লী",
+      "area": "south",
+      "address": "Rasbehari",
+      "addressBn": "রাসবিহারী",
+      "lat": 22.47,
+      "lng": 88.318
+    },
+    {
+      "id": 32,
+      "name": "Mehandnagar Palli",
+      "nameBn": "মেহন্দনগর পল্লী",
+      "area": "south",
+      "address": "Mehandnagar",
+      "addressBn": "মেহন্দনগর",
+      "lat": 22.465,
+      "lng": 88.316
+    },
+    {
+      "id": 33,
+      "name": "Bongebi Sarbojanin",
+      "nameBn": "বনগেবী সর্বজনীন",
+      "area": "south",
+      "address": "Bongebi",
+      "addressBn": "বনগেবী",
+      "lat": 22.46,
+      "lng": 88.314
+    },
+    {
+      "id": 34,
+      "name": "Joynagar Sigilni Palli",
+      "nameBn": "জয়নগর সিগিলনী পল্লী",
+      "area": "south",
+      "address": "Joynagar",
+      "addressBn": "জয়নগর",
+      "lat": 22.455,
+      "lng": 88.312
+    },
+    {
+      "id": 35,
+      "name": "Behala Club",
+      "nameBn": "বেহালা ক্লাব",
+      "area": "south",
+      "address": "Behala",
+      "addressBn": "বেহালা",
+      "lat": 22.516,
+      "lng": 88.34
+    },
+    {
+      "id": 36,
+      "name": "Thakurpukur Boro Mandap",
+      "nameBn": "ঠাকুরপুকুর বড় মণ্ডপ",
+      "area": "south",
+      "address": "Thakurpukur",
+      "addressBn": "ঠাকুরপুকুর",
+      "lat": 22.51,
+      "lng": 88.334
+    },
+    {
+      "id": 37,
+      "name": "Sahapur Sarbojanin",
+      "nameBn": "সাহাপুর সর্বজনীন",
+      "area": "south",
+      "address": "Sahapur",
+      "addressBn": "সাহাপুর",
+      "lat": 22.492,
+      "lng": 88.318
+    },
+    {
+      "id": 38,
+      "name": "Behala Nabapalli",
+      "nameBn": "বেহালা নবপল্লী",
+      "area": "south",
+      "address": "Behala",
+      "addressBn": "বেহালা",
+      "lat": 22.483,
+      "lng": 88.31
+    },
+    {
+      "id": 39,
+      "name": "Shibtala Sarbojanin",
+      "nameBn": "শিবতলা সর্বজনীন",
+      "area": "south",
+      "address": "Behala",
+      "addressBn": "বেহালা",
+      "lat": 22.498,
+      "lng": 88.322
+    },
+    {
+      "id": 40,
+      "name": "Panti Club",
+      "nameBn": "পনতী ক্লাব",
+      "area": "south",
+      "address": "Panti",
+      "addressBn": "পনতী",
+      "lat": 22.477,
+      "lng": 88.305
+    },
+    {
+      "id": 41,
+      "name": "Nagshwari Dakhin Palli",
+      "nameBn": "নাগশ্বরী দক্ষিণ পল্লী",
+      "area": "south",
+      "address": "Thakurpukur",
+      "addressBn": "ঠাকুরপুকুর",
+      "lat": 22.519,
+      "lng": 88.343
+    },
+    {
+      "id": 42,
+      "name": "Shree Kalyan Sangha",
+      "nameBn": "শ্রী কল্যাণ সংঘ",
+      "area": "south",
+      "address": "Thakurpukur",
+      "addressBn": "ঠাকুরপুকুর",
+      "lat": 22.525,
+      "lng": 88.349
+    },
+    {
+      "id": 43,
+      "name": "Bagbazar Sarbojanin",
+      "nameBn": "বাগবাজার সর্বজনীন",
+      "area": "north",
+      "address": "Bagbazar",
+      "addressBn": "বাগবাজার",
+      "lat": 22.59,
+      "lng": 88.367
+    },
+    {
+      "id": 44,
+      "name": "Shobhabazar Rajbari",
+      "nameBn": "শোভাবাজার রাজবাড়ি",
+      "area": "north",
+      "address": "Shobhabazar",
+      "addressBn": "শোভাবাজার",
+      "lat": 22.596,
+      "lng": 88.369
+    },
+    {
+      "id": 45,
+      "name": "Kumartuli Sarbojanin",
+      "nameBn": "কুমারটুলি সর্বজনীন",
+      "area": "north",
+      "address": "Kumartuli",
+      "addressBn": "কুমারটুলি",
+      "lat": 22.5942,
+      "lng": 88.3698
+    },
+    {
+      "id": 46,
+      "name": "Ahiritola Sarbojanin",
+      "nameBn": "আহিরীটোলা সর্বজনীন",
+      "area": "north",
+      "address": "Ahiritola",
+      "addressBn": "আহিরীটোলা",
+      "lat": 22.5928,
+      "lng": 88.3712
+    },
+    {
+      "id": 47,
+      "name": "Simla Byam Samiti",
+      "nameBn": "সিমলা বায়াম সমিতি",
+      "area": "north",
+      "address": "Simla",
+      "addressBn": "সিমলা",
+      "lat": 22.5905,
+      "lng": 88.372
+    },
+    {
+      "id": 48,
+      "name": "Hatibagan Sarbojanin",
+      "nameBn": "হাতিবাগান সর্বজনীন",
+      "area": "north",
+      "address": "Hatibagan",
+      "addressBn": "হাতিবাগান",
+      "lat": 22.5885,
+      "lng": 88.3745
+    },
+    {
+      "id": 49,
+      "name": "College Square",
+      "nameBn": "কলেজ স্কোয়ার",
+      "area": "north",
+      "address": "College Square",
+      "addressBn": "কলেজ স্কোয়ার",
+      "lat": 22.5862,
+      "lng": 88.3755
+    },
+    {
+      "id": 50,
+      "name": "Mohammad Ali Park",
+      "nameBn": "মোহাম্মদ আলি পার্ক",
+      "area": "north",
+      "address": "Mohammad Ali Park",
+      "addressBn": "মোহাম্মদ আলি পার্ক",
+      "lat": 22.5838,
+      "lng": 88.3772
+    },
+    {
+      "id": 51,
+      "name": "Lebutala/Sangeet Mitra",
+      "nameBn": "লেবুতলা/সঙ্গীত মিত্র",
+      "area": "north",
+      "address": "Lebutala",
+      "addressBn": "লেবুতলা",
+      "lat": 22.582,
+      "lng": 88.3785
+    },
+    {
+      "id": 52,
+      "name": "Central Avenue Shrimoni",
+      "nameBn": "সেন্ট্রাল অ্যাভিনিউ শ্রীমণি",
+      "area": "north",
+      "address": "Central Avenue",
+      "addressBn": "সেন্ট্রাল অ্যাভিনিউ",
+      "lat": 22.58,
+      "lng": 88.381
+    },
+    {
+      "id": 53,
+      "name": "Burrabazar Nako’da",
+      "nameBn": "বড়বাজার নকো’দা",
+      "area": "north",
+      "address": "Burrabazar",
+      "addressBn": "বড়বাজার",
+      "lat": 22.5775,
+      "lng": 88.383
+    },
+    {
+      "id": 54,
+      "name": "Lal Bazar Sarbojanin",
+      "nameBn": "লালবাজার সর্বজনীন",
+      "area": "north",
+      "address": "Lal Bazar",
+      "addressBn": "লালবাজার",
+      "lat": 22.575,
+      "lng": 88.3845
+    },
+    {
+      "id": 55,
+      "name": "Posta Burrabazar",
+      "nameBn": "পোস্তা বড়বাজার",
+      "area": "north",
+      "address": "Posta",
+      "addressBn": "পোস্তা",
+      "lat": 22.5735,
+      "lng": 88.386
+    },
+    {
+      "id": 56,
+      "name": "Bagbazar Ghat Bala",
+      "nameBn": "বাগবাজার ঘাট ভালা",
+      "area": "north",
+      "address": "Bagbazar",
+      "addressBn": "বাগবাজার",
+      "lat": 22.5925,
+      "lng": 88.3655
+    },
+    {
+      "id": 57,
+      "name": "Bala Shitala Mandir",
+      "nameBn": "ভালা শীতলা মন্দির",
+      "area": "north",
+      "address": "Bala",
+      "addressBn": "ভালা",
+      "lat": 22.594,
+      "lng": 88.364
+    },
+    {
+      "id": 58,
+      "name": "Kazipara Sarbojanin",
+      "nameBn": "কাজিপাড়া সর্বজনীন",
+      "area": "north",
+      "address": "Kazipara",
+      "addressBn": "কাজিপাড়া",
+      "lat": 22.5955,
+      "lng": 88.3625
+    },
+    {
+      "id": 59,
+      "name": "Kakurgachhi Jubakbandh",
+      "nameBn": "কাকুরগাছি যুবকবন্দ",
+      "area": "north",
+      "address": "Kakurgachhi",
+      "addressBn": "কাকুরগাছি",
+      "lat": 22.597,
+      "lng": 88.36
+    },
+    {
+      "id": 60,
+      "name": "Belghoria 33 Palli",
+      "nameBn": "বেলঘাটা ৩৩ পল্লী",
+      "area": "north",
+      "address": "Belghoria",
+      "addressBn": "বেলঘাটা",
+      "lat": 22.599,
+      "lng": 88.3575
+    },
+    {
+      "id": 61,
+      "name": "Ultodanga Palli",
+      "nameBn": "উল্টোডাঙ্গা পল্লী",
+      "area": "north",
+      "address": "Ultodanga",
+      "addressBn": "উল্টোডাঙ্গা",
+      "lat": 22.601,
+      "lng": 88.355
+    },
+    {
+      "id": 62,
+      "name": "Shribhumi Sporting Club",
+      "nameBn": "শ্রীভূমি স্পোর্টিং ক্লাব",
+      "area": "north",
+      "address": "Ultodanga",
+      "addressBn": "উল্টোডাঙ্গা",
+      "lat": 22.603,
+      "lng": 88.352
+    },
+    {
+      "id": 63,
+      "name": "Lake Town Chandni Chowk",
+      "nameBn": "লেকটাউন চাঁদনী চৌক",
+      "area": "north",
+      "address": "Lake Town",
+      "addressBn": "লেকটাউন",
+      "lat": 22.606,
+      "lng": 88.348
+    },
+    {
+      "id": 64,
+      "name": "Chandni Chowk Mahindra Mall",
+      "nameBn": "চাঁদনী চৌক মহেন্দ্র মল্ল",
+      "area": "north",
+      "address": "Chandni Chowk",
+      "addressBn": "চাঁদনী চৌক",
+      "lat": 22.608,
+      "lng": 88.345
+    },
+    {
+      "id": 65,
+      "name": "Central Lane Dupurhar",
+      "nameBn": "সেন্ট্রাল লেন দপু্যোহার",
+      "area": "north",
+      "address": "Central Lane",
+      "addressBn": "সেন্ট্রাল লেন",
+      "lat": 22.585,
+      "lng": 88.38
+    },
+    {
+      "id": 66,
+      "name": "Katgachhi Sarbojanin",
+      "nameBn": "কাটগাছি সর্বজনীন",
+      "area": "north",
+      "address": "Katgachhi",
+      "addressBn": "কাটগাছি",
+      "lat": 22.578,
+      "lng": 88.382
+    },
+    {
+      "id": 67,
+      "name": "Batala Sarbojanin",
+      "nameBn": "বটতলা সর্বজনীন",
+      "area": "north",
+      "address": "Batala",
+      "addressBn": "বটতলা",
+      "lat": 22.576,
+      "lng": 88.384
+    },
+    {
+      "id": 68,
+      "name": "Ramkrishna Mission Palli",
+      "nameBn": "রামকৃষ্ণ মিশন পল্লী",
+      "area": "north",
+      "address": "Ramkrishna Mission",
+      "addressBn": "রামকৃষ্ণ মিশন",
+      "lat": 22.574,
+      "lng": 88.386
+    },
+    {
+      "id": 69,
+      "name": "More Bazar Sarbojanin",
+      "nameBn": "মোড়া বাজার সর্বজনীন",
+      "area": "north",
+      "address": "More Bazar",
+      "addressBn": "মোড়া বাজার",
+      "lat": 22.571,
+      "lng": 88.388
+    },
+    {
+      "id": 70,
+      "name": "Wholesale Market Rajkalpa",
+      "nameBn": "হোলসেল মার্কেট রাজকল্পা",
+      "area": "north",
+      "address": "Wholesale Market",
+      "addressBn": "হোলসেল মার্কেট",
+      "lat": 22.568,
+      "lng": 88.39
+    },
+    {
+      "id": 71,
+      "name": "Central Park Palli",
+      "nameBn": "সেন্ট্রাল পার্ক পল্লী",
+      "area": "north",
+      "address": "Central Park",
+      "addressBn": "সেন্ট্রাল পার্ক",
+      "lat": 22.565,
+      "lng": 88.392
+    },
+    {
+      "id": 72,
+      "name": "Nandan vicinity Mim Paltel",
+      "nameBn": "নন্দন-আশপাশ মিম প্যাল্টল",
+      "area": "north",
+      "address": "Nandan",
+      "addressBn": "নন্দন",
+      "lat": 22.562,
+      "lng": 88.394
+    },
+    {
+      "id": 73,
+      "name": "Dum Dum Park Tarun Sangha",
+      "nameBn": "ডামডাম পার্ক তারুন সংঘ",
+      "area": "north",
+      "address": "Dum Dum",
+      "addressBn": "ডামডাম",
+      "lat": 22.61,
+      "lng": 88.4
+    },
+    {
+      "id": 74,
+      "name": "Jagat Mukherjee Park",
+      "nameBn": "জগৎ মুখার্জি পার্ক",
+      "area": "north",
+      "address": "Jagat Mukherjee Park",
+      "addressBn": "জগৎ মুখার্জি পার্ক",
+      "lat": 22.615,
+      "lng": 88.405
+    }
+  ]
+}

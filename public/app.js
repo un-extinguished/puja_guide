@@ -1,5 +1,5 @@
 /**
- * Puja Guide — app core.
+ * PujaHop Kolkata — app core.
  *
  * Everything the app says about a pandal comes from data/pandals.json; the
  * only live thing it adds is what visitors report about queues, which is
@@ -7,6 +7,7 @@
  */
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const DATA_VERSION = '20261013-odbl-2';
 
 const state = {
   pandals: [],
@@ -18,23 +19,28 @@ const state = {
   stationBySlug: new Map(),
   routeBySlug: new Map(),
   lineBySlug: new Map(),
-  linesVisible: true,
+  visibleLines: new Set(),
   suggestIndex: -1,
   crowd: {},
   q: '',
   sort: 'suggested',
   crowdFilter: '',
   area: null,
+  quickFilter: null,
+  vipOnly: false,
   metro: null,
   neighbourhood: null,
   active: null,
   userLoc: null,
   shown: 45,
+  displayMode: 'map',
+  locale: 'en',
   plan: [],
   realDistances: false,
   legs: {},
   map: null,
   mapReady: false,
+  sheet: 'collapsed',
   view: { name: 'map', slug: null },
 };
 
@@ -63,6 +69,8 @@ const fmtAgo = (t) => {
 const LEVEL_LABEL = { easy: 'Easy', busy: 'Busy', packed: 'Very crowded' };
 const LEVELS = ['easy', 'busy', 'packed'];
 const YEAR = 2026;
+const t = (en, bn) => state.locale === 'bn' ? bn : en;
+const displayName = (p) => state.locale === 'bn' && p.nameBn ? p.nameBn : p.name;
 
 const searchText = (p) =>
   [p.name, p.nameBn, p.alsoKnownAs, p.formerName, p.neighbourhood, p.nearStreet, p.zoneName, p.areaName, p.nearestMetro.name]
@@ -78,14 +86,49 @@ function toast(msg, ms = 2600) {
   toast._t = setTimeout(() => (el.hidden = true), ms);
 }
 
+const drawerIds = ['drawer', 'nav-drawer', 'metro-drawer'];
+let drawerCloseTimer;
+let drawerTrigger;
+
+function openOverlayDrawer(id, trigger = document.activeElement) {
+  clearTimeout(drawerCloseTimer);
+  drawerIds.filter((other) => other !== id).forEach((other) => {
+    const drawer = $(`#${other}`);
+    drawer.classList.remove('open');
+    drawer.hidden = true;
+  });
+  const drawer = $(`#${id}`);
+  drawerTrigger = trigger;
+  drawer.hidden = false;
+  $('#drawer-backdrop').hidden = false;
+  window.requestAnimationFrame(() => drawer.classList.add('open'));
+  drawer.querySelector('.drawer-close')?.focus();
+  if (id === 'nav-drawer') $('#menu-toggle').setAttribute('aria-expanded', 'true');
+  if (id === 'drawer') updatePlanCount();
+}
+
+function closeOverlayDrawer(restoreFocus = true) {
+  const open = drawerIds.map((id) => $(`#${id}`)).find((drawer) => !drawer.hidden);
+  if (!open) return;
+  open.classList.remove('open');
+  if (open.id === 'nav-drawer') $('#menu-toggle').setAttribute('aria-expanded', 'false');
+  if (open.id === 'metro-drawer') $('#map-lines').setAttribute('aria-expanded', 'false');
+  if (open.id === 'drawer') updatePlanCount();
+  $('#drawer-backdrop').hidden = true;
+  clearTimeout(drawerCloseTimer);
+  drawerCloseTimer = setTimeout(() => { open.hidden = true; }, 240);
+  if (restoreFocus && drawerTrigger?.isConnected) drawerTrigger.focus();
+}
+
 /* ----------------------------------------------------------------- load */
 async function boot() {
   const [pandals, stations, routes, lines, meta] = await Promise.all(
     ['pandals', 'stations', 'routes', 'lines', 'meta'].map((n) =>
-      fetch(`/data/${n}.json`).then((r) => (r.ok ? r.json() : [])).catch(() => [])
+      fetch(`/data/${n}.json?v=${DATA_VERSION}`).then((r) => (r.ok ? r.json() : [])).catch(() => [])
     )
   );
   state.lines = Array.isArray(lines) ? lines : [];
+  state.visibleLines = new Set(state.lines.map((line) => line.slug));
   state.pandals = pandals.map((p) => ({ ...p, _search: searchText(p) }));
   state.stations = stations;
   state.routes = routes;
@@ -96,8 +139,13 @@ async function boot() {
   state.lineBySlug = new Map(state.lines.map((l) => [l.slug, l]));
   state.plan = readJSON('pujaguide.plan', []);
   state.realDistances = readJSON('pujaguide.realDistances', false) === true;
+  state.displayMode = readJSON('pujaguide.view', 'map') === 'list' ? 'list' : 'map';
+  state.locale = readJSON('pujaguide.locale', 'en') === 'bn' ? 'bn' : 'en';
+  if (document.documentElement) document.documentElement.lang = state.locale;
+  state.theme = readTheme();
+  applyTheme(state.theme);
 
-  document.title = `Puja Guide — ${state.pandals.length} Kolkata Durga Puja pandals on one map`;
+  document.title = `PujaHop Kolkata — ${state.pandals.length} Kolkata Durga Puja pandals on one map`;
 
   /* The list, the cards, the routes and every page must work whether or not
      the 3D map can start: a blocked tile server, a browser without WebGL or a
@@ -108,6 +156,14 @@ async function boot() {
   route();
 
   startMap();
+
+  /* The intro preloader can hand over now the list, the cards and the map
+     area are on screen. Guarded with a typeof check because the test DOM
+     stub has no dispatchEvent. */
+  window.__pujahopReady = true;
+  if (typeof window.dispatchEvent === 'function') {
+    try { window.dispatchEvent(new Event('pujahop:reveal')); } catch {}
+  }
 
   refreshCrowd().catch(() => {});
   setInterval(() => refreshCrowd().catch(() => {}), 120000);
@@ -127,6 +183,36 @@ const readJSON = (k, d) => {
 const writeJSON = (k, v) => {
   try { localStorage.setItem(k, JSON.stringify(v)); } catch {}
 };
+
+/* --------------------------------------------------------------- theme */
+/* Two themes: the bright paper one (the default) and a dark one. The choice is
+   stored as a raw 'dark'/'light' string — the inline head script and
+   preloader.js read the same key before app.js runs, so a returning visitor
+   gets the right background on the very first paint, with no flash. */
+const THEME_KEY = 'pujahop.theme';
+function readTheme() {
+  try { return localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'; } catch { return 'light'; }
+}
+function applyTheme(theme) {
+  const next = theme === 'dark' ? 'dark' : theme === 'light' ? 'light' : null;
+  if (!next) return;
+  state.theme = next;
+  const root = document.documentElement;
+  if (root) {
+    if (next === 'dark') root.setAttribute('data-theme', 'dark');
+    else root.removeAttribute('data-theme');
+  }
+  try { localStorage.setItem(THEME_KEY, next); } catch {}
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', next === 'dark' ? '#0a0709' : '#7b1f18');
+  const toggle = $('#theme-toggle');
+  if (toggle) {
+    const dark = next === 'dark';
+    toggle.textContent = t(dark ? 'Bright' : 'Dark', dark ? 'উজ্জ্বল' : 'অন্ধকার');
+    toggle.setAttribute('aria-pressed', dark ? 'true' : 'false');
+    toggle.setAttribute('aria-label', dark ? 'Switch to the bright theme' : 'Switch to the dark theme');
+  }
+}
 
 /* ------------------------------------------------------------------ map */
 const selectedSource = () => ({
@@ -151,6 +237,7 @@ function pandalFeatures(list) {
         name: p.name,
         crowd: (state.crowd[p.slug] || {}).level || 'none',
         verified: p.position.verified ? 1 : 0,
+        vip: p.isVIP ? 1 : 0,
       },
     })),
   };
@@ -177,7 +264,7 @@ function startMap() {
 
 function mapUnavailable(message) {
   state.mapFailed = true;
-  for (const id of ['#map-3d', '#map-fit', '#map-locate']) {
+  for (const id of ['#map-zoom-in', '#map-zoom-out', '#map-3d', '#map-fit', '#map-locate']) {
     const b = $(id);
     if (b) { b.disabled = true; b.title = 'The map is not available in this browser'; }
   }
@@ -202,7 +289,6 @@ function buildMap() {
     dragRotate: true,
   });
   state.map = map;
-  map.addControl(new maplibregl.NavigationControl({ visualizePitch: true }), 'bottom-right');
   map.addControl(new maplibregl.ScaleControl({ maxWidth: 90, unit: 'metric' }), 'bottom-left');
 
   map.on('load', () => {
@@ -236,7 +322,8 @@ function buildMap() {
     map.addSource('metro-lines', { type: 'geojson', data: lineFeatures() });
     map.addLayer({
       id: 'metro-lines', type: 'line', source: 'metro-lines',
-      layout: { 'line-cap': 'round', 'line-join': 'round', visibility: state.linesVisible ? 'visible' : 'none' },
+      layout: { 'line-cap': 'round', 'line-join': 'round' },
+      filter: ['in', ['get', 'slug'], ['literal', [...state.visibleLines]]],
       paint: {
         'line-color': ['get', 'colour'],
         'line-width': ['interpolate', ['linear'], ['zoom'], 10, 2, 14, 4.5],
@@ -262,6 +349,20 @@ function buildMap() {
         ],
         'circle-stroke-color': '#fff', 'circle-stroke-width': ['case', ['==', ['get', 'verified'], 1], 1.8, 1],
         'circle-opacity': .96,
+      },
+    });
+    /* A slim gold ring on the owner's pass pandals only. The ordinary circle
+       keeps its design, so VIP never changes how a marker reads, clusters or
+       reports its crowd level — it just gets a ring. */
+    map.addLayer({
+      id: 'pandals-vip', type: 'circle', source: 'pandals',
+      filter: ['==', ['get', 'vip'], 1],
+      paint: {
+        'circle-radius': ['interpolate', ['linear'], ['zoom'], 10, 6.4, 15, 12.6],
+        'circle-color': 'rgba(0,0,0,0)',
+        'circle-stroke-color': '#e0a020',
+        'circle-stroke-width': ['case', ['==', ['get', 'verified'], 1], 2.4, 2],
+        'circle-opacity': 1,
       },
     });
     map.addLayer({
@@ -312,6 +413,7 @@ function buildMap() {
     }
     fitFiltered();
     render();
+    map.resize();
   });
 }
 const map = () => state.map;
@@ -323,6 +425,7 @@ function filtered() {
     if (state.area && p.area !== state.area) return false;
     if (state.neighbourhood && p.neighbourhood !== state.neighbourhood) return false;
     if (state.metro && p.nearestMetro.name !== state.metro) return false;
+    if (state.vipOnly && !p.isVIP) return false;
     if (state.crowdFilter) {
       const c = state.crowd[p.slug];
       if (state.crowdFilter === 'reported') { if (!c) return false; }
@@ -354,6 +457,12 @@ function filtered() {
   } else {
     list.sort(sorters[state.sort] || sorters.suggested);
   }
+  if (state.quickFilter === 'closest10') {
+    list = list
+      .slice()
+      .sort((a, b) => a.nearestMetro.walkMeters - b.nearestMetro.walkMeters || a.name.localeCompare(b.name))
+      .slice(0, 10);
+  }
   return list;
 }
 
@@ -371,17 +480,18 @@ function render() {
   const done = list.slice(0, state.shown);
 
   $('#count').textContent = list.length === state.pandals.length
-    ? `${list.length} pandals`
-    : `${list.length} of ${state.pandals.length} pandals`;
+    ? t(`${list.length} pandals`, `${list.length}টি প্যান্ডেল`)
+    : t(`${list.length} of ${state.pandals.length} pandals`, `${state.pandals.length}টির মধ্যে ${list.length}টি প্যান্ডেল`);
+  $('#panel-toggle-label').textContent = state.sheet === 'collapsed' ? $('#count').textContent : t('Pandal results', 'প্যান্ডেলের তালিকা');
 
   const ol = $('#list');
   ol.innerHTML = done.map((p) => {
     const c = state.crowd[p.slug];
     return `<li class="item" data-slug="${p.slug}" data-active="${state.active === p.slug}">
       <button type="button">
-        <span class="item-name"><strong>${esc(p.name)}</strong>${p.nameBn ? `<span class="item-bn" lang="bn">${esc(p.nameBn)}</span>` : ''}</span>
+        <span class="item-name"><strong>${esc(displayName(p))}</strong>${state.locale === 'en' && p.nameBn ? `<span class="item-bn" lang="bn">${esc(p.nameBn)}</span>` : ''}</span>
         <span class="item-meta">${esc(subtitleFor(p))}</span>
-        <span>${p.position.verified ? '<span class="badge verified">Position checked</span> ' : ''}${c ? `<span class="badge ${c.level}">${LEVEL_LABEL[c.level]} · ${fmtAgo(c.at)}</span>` : ''}${state.plan.includes(p.slug) ? '<span class="badge">In your route</span>' : ''}</span>
+        <span>${p.isVIP ? '<span class="badge vip">★ VIP</span> ' : ''}${p.reviewStatus ? `<span class="badge review">${t('Needs review', 'যাচাই প্রয়োজন')}</span> ` : p.position.verified ? `<span class="badge verified">${t('Position checked', 'অবস্থান যাচাই')}</span> ` : ''}${c ? `<span class="badge ${c.level}">${t(LEVEL_LABEL[c.level], { easy: 'সহজ', busy: 'ভিড়', packed: 'অত্যন্ত ভিড়' }[c.level])} · ${fmtAgo(c.at)}</span>` : ''}${state.plan.includes(p.slug) ? `<span class="badge">${t('In your route', 'আপনার রুটে আছে')}</span>` : ''}</span>
       </button>
     </li>`;
   }).join('');
@@ -443,9 +553,11 @@ function showCard(p) {
   el.innerHTML = `
     <div class="card-head">
       <button class="btn ghost small card-close" type="button" aria-label="Close" id="card-close">×</button>
-      <h2>${esc(p.name)}</h2>
+      <h2>${esc(displayName(p))}${p.isVIP ? ' <span class="badge vip">★ VIP</span>' : ''}</h2>
       ${p.nameBn ? `<div class="faint" lang="bn">${esc(p.nameBn)}</div>` : ''}
       <div class="tagline">${esc([p.areaName, p.neighbourhood].filter(Boolean).join(' · '))}</div>
+    ${p.reviewStatus ? '<p class="review-note" role="note">This existing placeholder entry is retained, but its official pandal name and location need manual verification.</p>' : ''}
+    ${p.isVIP && p.vipReview ? '<p class="review-note vip" role="note">This pandal is on your VIP pass list, but its identity or map pin still needs a human check — please verify before trusting it.</p>' : ''}
     </div>
     <div class="card-body">
       ${p.photo ? `<figure class="photo">
@@ -453,16 +565,17 @@ function showCard(p) {
         <figcaption>${esc(p.photo.artist)} · ${p.photo.licenceUrl ? `<a href="${esc(p.photo.licenceUrl)}" target="_blank" rel="noopener">${esc(p.photo.licence)}</a>` : esc(p.photo.licence)} · ${p.photo.year} · <a href="${esc(p.photo.page)}" target="_blank" rel="noopener">Wikimedia Commons</a>${p.photo.fromPinMeters != null ? ` · photographed ${p.photo.fromPinMeters} m from this pin` : ''}. Each year the pandal is rebuilt on a new theme, so this is not what is standing now.</figcaption>
       </figure>` : ''}
       <div class="crowd-row">
-        ${LEVELS.map((l) => `<button class="crowd-btn ${l}" data-level="${l}" type="button">${LEVEL_LABEL[l]}</button>`).join('')}
+        ${LEVELS.map((l) => `<button class="crowd-btn ${l}" data-level="${l}" type="button">${t(LEVEL_LABEL[l], { easy: 'সহজ', busy: 'ভিড়', packed: 'অত্যন্ত ভিড়' }[l])}</button>`).join('')}
       </div>
       ${c ? `<div class="report ${c.level}"><strong>${LEVEL_LABEL[c.level]}</strong> at this pandal, reported ${fmtAgo(c.at)}${c.note ? ` — “${esc(c.note)}”` : ''}. ${c.count > 1 ? `${c.count} reports in the last 90 minutes.` : ''}</div>`
           : `<div class="faint" style="font-size:12.5px">No queue report in the last 90 minutes. Tell the next person what it is like.</div>`}
       ${reports.length > 1 ? `<details class="more"><summary>Earlier reports</summary>${reports.map((r) => `<div class="report ${r.level}">${LEVEL_LABEL[r.level]} — ${fmtAgo(r.at)}</div>`).join('')}</details>` : ''}
 
       <dl class="kv">
-        <dt>Walk from</dt><dd>${metroLink(p.nearestMetro.name)} · ${fmtM(p.nearestMetro.walkMeters)} (${fmtMin(p.nearestMetro.walkMeters)})</dd>
-        <dt>On</dt><dd>${esc(p.nearStreet || '—')}</dd>
-        <dt>Area</dt><dd>${esc(p.areaName)}${p.neighbourhood ? ` · ${esc(p.neighbourhood)}${p.neighbourhoodInferred ? ' <span class="faint">(nearest para, inferred)</span>' : ''}` : ''}</dd>
+        ${state.userLoc ? `<dt>${t('From you', 'আপনার থেকে')}</dt><dd>${fmtM(dist(state.userLoc, p))} ${t('straight-line distance', 'সরলরেখার দূরত্ব')}</dd>` : ''}
+        <dt>${t('Walk from', 'হেঁটে')}</dt><dd>${metroLink(p.nearestMetro.name)} · ${fmtM(p.nearestMetro.walkMeters)} (${fmtMin(p.nearestMetro.walkMeters)})</dd>
+        <dt>${t('Address / street', 'ঠিকানা / রাস্তা')}</dt><dd>${esc(p.nearStreet || '—')}</dd>
+        <dt>${t('Zone / area', 'অঞ্চল')}</dt><dd>${esc(p.zoneName || p.areaName)} · ${esc(p.areaName)}${p.neighbourhood ? ` · ${esc(p.neighbourhood)}${p.neighbourhoodInferred ? ' <span class="faint">(nearest para, inferred)</span>' : ''}` : ''}</dd>
         <dt>Position</dt><dd>${positionNote(p)}</dd>
         ${p.nearestMetro.estimated ? '<dt>Walk</dt><dd><span class="badge">estimated</span> this puja was added from a visitor report, so the walk to the station is worked out from the position rather than published.</dd>' : ''}
         ${p.alsoKnownAs ? `<dt>Also known as</dt><dd>${esc(p.alsoKnownAs)}</dd>` : ''}
@@ -470,10 +583,10 @@ function showCard(p) {
       </dl>
 
       <div class="card-actions">
-        <button class="btn primary small" type="button" data-act="add">${state.plan.includes(p.slug) ? 'In your route' : 'Add to route'}</button>
-        <button class="btn small" type="button" data-act="directions">Walking directions</button>
-        <button class="btn small" type="button" data-act="been">${isBeen(p.slug) ? 'Been there ✓' : 'Been there'}</button>
-        <button class="btn small" type="button" data-act="share">Share</button>
+        <button class="btn primary small" type="button" data-act="add">${state.plan.includes(p.slug) ? t('In your route', 'আপনার রুটে আছে') : t('Add to route', 'রুটে যোগ করুন')}</button>
+        <button class="btn small" type="button" data-act="directions">${t('Walking directions', 'হাঁটার দিকনির্দেশ')}</button>
+        <button class="btn small" type="button" data-act="been">${isBeen(p.slug) ? t('Been there ✓', 'গিয়েছি ✓') : t('Been there', 'গিয়েছি')}</button>
+        <button class="btn small" type="button" data-act="share">${t('Share', 'শেয়ার')}</button>
         <a class="btn small" href="https://www.google.com/maps/dir/?api=1&destination=${p.lat},${p.lon}&travelmode=walking" target="_blank" rel="noopener">Open in Maps</a>
         <button class="btn small" type="button" data-act="wrong">Something wrong here?</button>
       </div>
@@ -498,7 +611,7 @@ function showCard(p) {
   el.querySelector('[data-act="wrong"]').onclick = () => {
     const subject = encodeURIComponent(`Correction: ${p.name}`);
     const body = encodeURIComponent(`Pandal: ${p.name} (${p.slug})\nCoordinates shown: ${p.lat}, ${p.lon}\nArea: ${p.areaName}${p.neighbourhood ? ' / ' + p.neighbourhood : ''}\n\nWhat is wrong:\n\nWhere it should be (if you know):\n`);
-    location.href = `mailto:hello@pujaguide.in?subject=${subject}&body=${body}`;
+    location.href = `mailto:hello@pujahop.in?subject=${subject}&body=${body}`;
   };
 }
 
@@ -508,6 +621,9 @@ function metroLink(name) {
 }
 
 function positionNote(p) {
+  if (p.reviewStatus) {
+    return '<span class="badge review">Needs review</span> placeholder name and location retained unchanged pending manual verification.';
+  }
   const m = p.position.method;
   const map = {
     verified: 'confirmed with the puja committee or checked on the ground',
@@ -579,13 +695,17 @@ function lineFeatures() {
 }
 
 function renderLineLegend() {
-  const el = $('#line-legend');
-  if (!el || !state.lines.length) return;
-  if (!state.linesVisible) { el.hidden = true; return; }
-  el.hidden = false;
-  el.innerHTML = `<strong>Metro lines</strong>
-    ${state.lines.map((l) => `<span><i class="swatch" style="background:${esc(l.colour)}"></i>${esc(l.name)}<span class="faint">&nbsp;${esc(l.route)}</span></span>`).join('')}
-    <span class="faint">Alignment joins published station coordinates; not a survey.</span>`;
+  const el = $('#metro-line-options');
+  if (!el) return;
+  el.innerHTML = `${state.lines.map((line) => `<label class="metro-line-option">
+    <input type="checkbox" data-line="${esc(line.slug)}" ${state.visibleLines.has(line.slug) ? 'checked' : ''}>
+    <i class="swatch" style="background:${esc(line.colour)}"></i>
+    <span><strong>${esc(line.name)}</strong><small>${esc(line.route || '')}</small></span>
+  </label>`).join('')}
+  <p class="fine">Alignment joins published station coordinates; it is not a survey.</p>`;
+  const allVisible = state.lines.length > 0 && state.visibleLines.size === state.lines.length;
+  $('#map-lines').setAttribute('aria-pressed', String(state.visibleLines.size > 0));
+  $('#map-lines').textContent = allVisible ? 'Metro' : `Metro ${state.visibleLines.size}/${state.lines.length}`;
 }
 
 function locate() {
@@ -610,7 +730,7 @@ function locate() {
 
 function sharePandal(p) {
   const url = `${location.origin}/p/${p.slug}`;
-  const data = { title: `${p.name} — Puja Guide`, text: `${p.name}, ${p.areaName}. Walk from ${p.nearestMetro.name} metro: ${fmtM(p.nearestMetro.walkMeters)}.`, url };
+  const data = { title: `${p.name} — PujaHop Kolkata`, text: `${p.name}, ${p.areaName}. Walk from ${p.nearestMetro.name} metro: ${fmtM(p.nearestMetro.walkMeters)}.`, url };
   if (navigator.share) navigator.share(data).catch(() => {});
   else { navigator.clipboard?.writeText(url); toast('Link copied'); }
 }
@@ -812,7 +932,7 @@ async function sharePlan() {
 
 async function saveOffline() {
   try {
-    const cache = await caches.open('pujaguide-v1');
+    const cache = await caches.open('pujahop-offline-v1');
     await Promise.all([
       cache.add('/data/pandals.json'),
       cache.add('/data/stations.json'),
@@ -828,10 +948,10 @@ async function saveOffline() {
 }
 
 function wirePlan() {
-  const open = () => { $('#drawer').hidden = false; renderPlan(); updatePlanCount(); };
+  const open = () => { renderPlan(); openOverlayDrawer('drawer', $('#plan-open')); };
   renderPlan();   // so the drawer always has its explanation in it, never a blank slab
-  $('#plan-open').onclick = () => ($('#drawer').hidden ? open() : ($('#drawer').hidden = false));
-  $('#plan-close').onclick = () => { $('#drawer').hidden = true; updatePlanCount(); };
+  $('#plan-open').onclick = () => ($('#drawer').hidden ? open() : closeOverlayDrawer());
+  $('#plan-close').onclick = () => closeOverlayDrawer();
   updatePlanCount();
 }
 
@@ -839,7 +959,14 @@ function wirePlan() {
 function wireChrome() {
   $('#search-form').onsubmit = (e) => e.preventDefault();
   $('#q-clear').onclick = () => { $('#q').value = ''; state.q = ''; $('#q-clear').hidden = true; render(); closeSuggest(); };
-  $('#q').addEventListener('input', (e) => { state.q = e.target.value; state.shown = 45; $('#q-clear').hidden = !state.q; render(); renderSuggest(); });
+  $('#q').addEventListener('input', (e) => {
+    state.q = e.target.value;
+    state.shown = 45;
+    $('#q-clear').hidden = !state.q;
+    if (state.q && state.sheet === 'collapsed') setSheet('half');
+    render();
+    renderSuggest();
+  });
   $('#q').addEventListener('focus', () => { if (state.q.trim().length > 1) renderSuggest(); });
   $('#q').addEventListener('keydown', (e) => {
     const items = $$('#suggest .suggest-item');
@@ -855,45 +982,157 @@ function wireChrome() {
   $('#sort').onchange = (e) => { state.sort = e.target.value; render(); };
   $('#crowd-filter').onchange = (e) => { state.crowdFilter = e.target.value; render(); };
   $('#load-more').onclick = () => { state.shown += 60; render(); };
+  $('#view-map').onclick = () => {
+    setDisplayMode('map');
+    setSheet(isNarrowScreen() ? 'half' : 'collapsed');
+  };
+  $('#view-list').onclick = () => {
+    setDisplayMode('list');
+    setSheet('full');
+  };
+  $('#language-toggle').onclick = () => setLocale(state.locale === 'en' ? 'bn' : 'en');
+  const themeToggle = $('#theme-toggle');
+  if (themeToggle) themeToggle.onclick = () => applyTheme(state.theme === 'dark' ? 'light' : 'dark');
+  $('#location-select').onchange = (e) => {
+    const value = e.target.value;
+    state.area = value.startsWith('area:') ? value.slice(5) : null;
+    state.neighbourhood = value.startsWith('para:') ? decodeURIComponent(value.slice(5)) : null;
+    state.quickFilter = null;
+    state.metro = null;
+    state.shown = 45;
+    renderChips();
+    render();
+    fitFiltered();
+  };
   $('#near-me').onclick = async () => {
     const ok = await locate();
-    if (ok) { state.sort = 'distance'; $('#sort').value = 'distance'; render(); }
+    if (ok) {
+      state.sort = 'distance';
+      $('#sort').value = 'distance';
+      state.quickFilter = null;
+      renderChips();
+      render();
+      if (state.active && !$('#card').hidden) showCard(state.bySlug.get(state.active));
+    }
   };
   $('#map-lines').onclick = (e) => {
-    state.linesVisible = !state.linesVisible;
-    e.currentTarget.setAttribute('aria-pressed', String(state.linesVisible));
+    renderLineLegend();
+    e.currentTarget.setAttribute('aria-expanded', 'true');
+    openOverlayDrawer('metro-drawer', e.currentTarget);
+  };
+  $('#metro-line-options').onchange = (e) => {
+    const input = e.target.closest('input[data-line]');
+    if (!input) return;
+    if (input.checked) state.visibleLines.add(input.dataset.line);
+    else state.visibleLines.delete(input.dataset.line);
     if (state.mapReady) {
-      map().setLayoutProperty('metro-lines', 'visibility', state.linesVisible ? 'visible' : 'none');
+      map().setFilter('metro-lines', ['in', ['get', 'slug'], ['literal', [...state.visibleLines]]]);
     }
     renderLineLegend();
   };
   $('#map-fit').onclick = () => { if (state.mapReady) fitFiltered(); else toast('There is no map to fit in this browser — the list is all ' + state.pandals.length + ' pandals.'); };
   $('#map-locate').onclick = async () => {
     if (!(await locate())) return;
-    if (state.mapReady) fitFiltered(); else toast('Sorted by how far you are.');
+    if (state.mapReady) map().easeTo({ center: [state.userLoc.lon, state.userLoc.lat], zoom: Math.max(map().getZoom(), 14), duration: 700 });
+    else toast('Sorted by how far you are.');
   };
+  $('#map-zoom-in').onclick = () => state.mapReady && map().zoomIn();
+  $('#map-zoom-out').onclick = () => state.mapReady && map().zoomOut();
   $('#map-3d').onclick = (e) => {
     if (!state.mapReady) return;
     const on = e.currentTarget.getAttribute('aria-pressed') === 'true';
     e.currentTarget.setAttribute('aria-pressed', String(!on));
     map().easeTo({ pitch: on ? 0 : 48, duration: 500 });
   };
-  $('#menu-toggle').onclick = () => $('.mainnav').classList.toggle('open');
-
-  /* the title, the sorts and the chips are a lot of a phone screen, so on a
-     small one they start folded away, and the choice is remembered */
-  const head = $('.panel-head');
-  const toggle = $('#panel-toggle');
-  const setCollapsed = (on, remember = true) => {
-    head.classList.toggle('collapsed', on);
-    toggle.setAttribute('aria-expanded', String(!on));
-    const label = $('#panel-toggle-label');
-    if (label) label.textContent = on ? 'Show title, sort and filters' : 'Hide title, sort and filters';
-    if (remember) writeJSON('pujaguide.headCollapsed', on);
+  $('#menu-toggle').onclick = (e) => {
+    if ($('#nav-drawer').hidden) openOverlayDrawer('nav-drawer', e.currentTarget);
+    else closeOverlayDrawer();
   };
-  const stored = readJSON('pujaguide.headCollapsed', null);
-  setCollapsed(stored === null ? isNarrowScreen() : stored === true, false);
-  toggle.onclick = () => setCollapsed(!head.classList.contains('collapsed'));
+  $('#nav-filters').onclick = () => {
+    closeOverlayDrawer(false);
+    setSheet('full');
+    $('.filter-disclosure').open = true;
+    $('#crowd-filter').focus();
+  };
+  $('#drawer-backdrop').onclick = () => closeOverlayDrawer();
+  $$('.drawer-close').forEach((button) => button.addEventListener('click', () => closeOverlayDrawer()));
+  document.addEventListener('keydown', (e) => {
+    const drawer = drawerIds.map((id) => $(`#${id}`)).find((item) => !item.hidden);
+    if (!drawer) return;
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      closeOverlayDrawer();
+    } else if (e.key === 'Tab') {
+      const focusable = $$('a[href], button:not(:disabled), input:not(:disabled), select:not(:disabled)', drawer)
+        .filter((item) => item.getClientRects().length);
+      if (!focusable.length) return;
+      const first = focusable[0], last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  });
+
+  const sheet = $('#panel');
+  const handle = $('#panel-toggle');
+  const setSheet = (snap) => {
+    state.sheet = snap;
+    sheet.dataset.sheet = snap;
+    handle.setAttribute('aria-expanded', String(snap !== 'collapsed'));
+    handle.setAttribute('aria-label', `${snap === 'collapsed' ? 'Expand' : 'Collapse'} pandal results, currently ${snap}`);
+    $('#panel-toggle-label').textContent = snap === 'collapsed' ? $('#count').textContent : t('Pandal results', 'প্যান্ডেলের তালিকা');
+    sheet.style.height = '';
+    window.requestAnimationFrame(() => state.mapReady && map().resize());
+  };
+  setDisplayMode(state.displayMode);
+  setSheet(state.displayMode === 'list' ? 'full' : 'collapsed');
+  const nextSnap = { collapsed: 'half', half: 'full', full: 'collapsed' };
+  let drag = null;
+  let suppressSheetClick = false;
+  handle.addEventListener('pointerdown', (e) => {
+    if (!e.isPrimary || e.button !== 0) return;
+    drag = { y: e.clientY, height: sheet.getBoundingClientRect().height, moved: false };
+    sheet.classList.add('dragging');
+    handle.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  handle.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const delta = drag.y - e.clientY;
+    if (Math.abs(delta) > 4) drag.moved = true;
+    const maximum = window.innerHeight - $('.top').offsetHeight - 12;
+    sheet.style.height = `${Math.max(60, Math.min(maximum, drag.height + delta))}px`;
+  });
+  const endDrag = (e) => {
+    if (!drag) return;
+    const maximum = window.innerHeight - $('.top').offsetHeight - 12;
+    const current = sheet.getBoundingClientRect().height;
+    const mobile = isNarrowScreen();
+    const snaps = mobile
+      ? { collapsed: 66, half: window.innerHeight * 0.50, full: maximum }
+      : { collapsed: 66, half: window.innerHeight * 0.53, full: maximum };
+    const nearest = Object.entries(snaps).sort((a, b) => Math.abs(a[1] - current) - Math.abs(b[1] - current))[0][0];
+    suppressSheetClick = drag.moved;
+    drag = null;
+    sheet.classList.remove('dragging');
+    setSheet(nearest);
+    if (e && handle.hasPointerCapture(e.pointerId)) handle.releasePointerCapture(e.pointerId);
+  };
+  handle.addEventListener('pointerup', endDrag);
+  handle.addEventListener('pointercancel', endDrag);
+  handle.onclick = () => {
+    if (suppressSheetClick) { suppressSheetClick = false; return; }
+    setSheet(nextSnap[state.sheet]);
+  };
+  handle.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowUp' || e.key === 'ArrowDown' || e.key === 'Home' || e.key === 'End') {
+      e.preventDefault();
+      setSheet(e.key === 'Home' || e.key === 'ArrowDown' ? 'collapsed' : e.key === 'End' ? 'full' : 'half');
+    }
+  });
+  sheet.addEventListener('transitionend', (e) => {
+    if (e.propertyName === 'height' && state.mapReady) map().resize();
+  });
+  window.addEventListener('resize', () => state.mapReady && map().resize());
 
   /* internal links navigate without a reload */
   document.addEventListener('click', (e) => {
@@ -901,16 +1140,19 @@ function wireChrome() {
     if (!a || a.target || a.hasAttribute('download')) return;
     const href = a.getAttribute('href');
     if (!href || !href.startsWith('/') || href.startsWith('//')) return;
-    const known = /^\/(p\/[^/]+|area\/[^/]+|metro(\/[^/]+)?|route\/[^/]+|routes|pandals|guide|about|legal|contact|press|live)?\/?$/.test(href.split('#')[0].split('?')[0]);
+    const known = /^\/(p\/[^/]+|area\/[^/]+|metro(\/[^/]+)?|route\/[^/]+|routes|pandals|guide|help|about|legal|contact|press|live)?\/?$/.test(href.split('#')[0].split('?')[0]);
     if (!known) return;
     e.preventDefault();
-    $('.mainnav').classList.remove('open');
+    closeOverlayDrawer(false);
     history.pushState({}, '', href);
     route();
     window.scrollTo(0, 0);
   });
 
   renderChips();
+  syncLocationSelect();
+  renderLineLegend();
+  setLocale(state.locale);
 }
 
 /* ----------------------------------------------------- search suggestions */
@@ -993,32 +1235,108 @@ function chooseSuggestion(kind, slug) {
     openPage({ name: 'metro', slug });
   } else if (kind === 'area') {
     state.area = slug; state.neighbourhood = null; state.shown = 45;
-    renderChips(); render(); if (state.mapReady) fitFiltered();
+    state.quickFilter = null;
+    renderChips(); syncLocationSelect(); render(); if (state.mapReady) fitFiltered();
   } else if (kind === 'neighbourhood') {
     state.neighbourhood = slug; state.area = null; state.shown = 45;
-    renderChips(); render(); if (state.mapReady) fitFiltered();
+    state.quickFilter = null;
+    renderChips(); syncLocationSelect(); render(); if (state.mapReady) fitFiltered();
   }
 }
 
 function renderChips() {
   const areas = [...new Map(state.pandals.map((p) => [p.area, p.areaName])).entries()];
+  const vipCount = state.pandals.filter((p) => p.isVIP).length;
   const chips = [
     ['area', null, 'All areas'],
+    ['vip', null, `VIP Pandals (${vipCount})`],
+    ['quick', 'closest10', 'Closest 10 by metro walk'],
     ...areas.map(([slug, name]) => ['area', slug, name]),
   ];
   $('#chips').innerHTML = chips.map(([kind, slug, label]) => {
-    const on = state[kind] === slug;
-    return `<button class="chip" type="button" data-kind="${kind}" data-slug="${slug ?? ''}" aria-pressed="${on}">${esc(label)}</button>`;
+    const on = kind === 'quick'
+      ? state.quickFilter === slug
+      : kind === 'vip'
+        ? state.vipOnly
+        : kind === 'area' && slug == null
+          ? !state.area && !state.neighbourhood && !state.quickFilter
+          : state[kind] === slug;
+    const text = label === 'All areas' ? t('All areas', 'সব এলাকা')
+      : label === 'Closest 10 by metro walk' ? t('Closest 10 by metro walk', 'মেট্রোর সবচেয়ে কাছে ১০টি')
+        : label.startsWith('VIP Pandals') ? `${t('VIP Pandals', 'ভিআইপি প্যান্ডেল')} (${vipCount})`
+          : label;
+    return `<button class="chip" type="button" data-kind="${kind}" data-slug="${slug ?? ''}" aria-pressed="${on}">${esc(text)}</button>`;
   }).join('');
   $('#chips').onclick = (e) => {
     const b = e.target.closest('.chip');
     if (!b) return;
-    state.area = b.dataset.slug || null;
+    if (b.dataset.kind === 'vip') {
+      state.vipOnly = !state.vipOnly;
+    } else if (b.dataset.kind === 'quick') {
+      state.quickFilter = b.dataset.slug || null;
+      state.area = null;
+      state.neighbourhood = null;
+      state.metro = null;
+    } else {
+      state.area = b.dataset.slug || null;
+      state.neighbourhood = null;
+      state.quickFilter = null;
+    }
     state.shown = 45;
     renderChips();
+    syncLocationSelect();
     render();
     fitFiltered();
   };
+}
+
+function syncLocationSelect() {
+  const select = $('#location-select');
+  if (!select) return;
+  const areas = [...new Map(state.pandals.map((p) => [p.area, p.areaName])).entries()]
+    .sort((a, b) => a[1].localeCompare(b[1]));
+  const neighbourhoods = [...new Set(state.pandals.map((p) => p.neighbourhood).filter(Boolean))]
+    .sort((a, b) => a.localeCompare(b));
+  select.innerHTML = `<option value="">${t('All Kolkata', 'সমগ্র কলকাতা')}</option>
+    <optgroup label="${t('Areas', 'এলাকা')}">${areas.map(([slug, name]) => `<option value="area:${esc(slug)}">${esc(name)}</option>`).join('')}</optgroup>
+    <optgroup label="${t('Neighbourhoods', 'পাড়া')}">${neighbourhoods.map((name) => `<option value="para:${encodeURIComponent(name)}">${esc(name)}</option>`).join('')}</optgroup>`;
+  select.value = state.area ? `area:${state.area}`
+    : state.neighbourhood ? `para:${encodeURIComponent(state.neighbourhood)}`
+      : '';
+}
+
+function setDisplayMode(mode) {
+  state.displayMode = mode === 'list' ? 'list' : 'map';
+  $('#layout').dataset.mode = state.displayMode;
+  $('#view-map').setAttribute('aria-pressed', String(state.displayMode === 'map'));
+  $('#view-list').setAttribute('aria-pressed', String(state.displayMode === 'list'));
+  writeJSON('pujaguide.view', state.displayMode);
+  window.requestAnimationFrame(() => state.mapReady && map().resize());
+}
+
+function setLocale(locale) {
+  state.locale = locale === 'bn' ? 'bn' : 'en';
+  if (document.documentElement) document.documentElement.lang = state.locale;
+  writeJSON('pujaguide.locale', state.locale);
+  const toggle = $('#language-toggle');
+  toggle.textContent = state.locale === 'bn' ? 'English' : 'বাংলা';
+  toggle.setAttribute('aria-label', state.locale === 'bn' ? 'Switch interface language to English' : 'বাংলায় দেখুন');
+  $('#q').placeholder = t('Search a pandal, street or neighbourhood…', 'প্যান্ডেল, রাস্তা বা পাড়া খুঁজুন…');
+  $('#near-me').textContent = t('Near me', 'আমার কাছে');
+  $('#near-me').title = t('Sort by your location', 'আপনার অবস্থান অনুযায়ী সাজান');
+  $('#location-label').textContent = t('Change location', 'এলাকা বেছে নিন');
+  const sortLabels = [['Suggested', 'প্রস্তাবিত'], ['Distance from me', 'আমার থেকে দূরত্ব'], ['Walk from its metro', 'মেট্রো থেকে হাঁটা'], ['Name', 'নাম'], ['Area', 'এলাকা'], ['Neighbourhood', 'পাড়া'], ['Live queue', 'বর্তমান ভিড়']];
+  $('#sort').querySelectorAll('option').forEach((option, i) => { option.textContent = t(...sortLabels[i]); });
+  const crowdLabels = [['Any', 'যে কোনও'], ['Reported right now', 'সাম্প্রতিক রিপোর্ট'], ['Easy', 'সহজ'], ['Busy', 'ভিড়'], ['Very crowded', 'অত্যন্ত ভিড়']];
+  $('#crowd-filter').querySelectorAll('option').forEach((option, i) => { option.textContent = t(...crowdLabels[i]); });
+  $('#filter-summary').textContent = t('Filter pandals', 'প্যান্ডেল বাছুন');
+  $('#view-map').textContent = t('Map', 'মানচিত্র');
+  $('#view-list').textContent = t('List', 'তালিকা');
+  syncLocationSelect();
+  renderChips();
+  render();
+  if (state.active && !$('#card').hidden) showCard(state.bySlug.get(state.active));
+  applyTheme(state.theme);
 }
 
 /* ------------------------------------------------------------ router */
@@ -1033,7 +1351,7 @@ function route() {
       state.plan = stops;
       writeJSON('pujaguide.plan', stops);
       state.legs = {};
-      $('#drawer').hidden = false;
+      openOverlayDrawer('drawer', $('#plan-open'));
       renderPlan();
       updatePlanCount();
       drawPlanLine();
@@ -1068,7 +1386,7 @@ function route() {
     select(b, { noFly: false });
     const p = state.bySlug.get(b);
     if (state.mapReady) map().flyTo({ center: [p.lon, p.lat], zoom: 15.5, pitch: 55, duration: 700 });
-    document.title = `${p.name} — Puja Guide`;
+    document.title = `${p.name} — PujaHop Kolkata`;
     return;
   }
   if (a === 'area' && b) { openPage({ name: 'area', slug: b }); return; }
@@ -1079,7 +1397,7 @@ function route() {
   if (a === 'pandals') { openPage({ name: 'pandals' }); return; }
   if (a === 'routes') { openPage({ name: 'routes' }); return; }
   if (a === 'live') { openPage({ name: 'live' }); return; }
-  if (['guide', 'about', 'legal', 'contact', 'press'].includes(a)) { openPage({ name: a }); return; }
+  if (['guide', 'about', 'legal', 'contact', 'press', 'help'].includes(a)) { openPage({ name: a }); return; }
   openPage({ name: 'missing' });
 }
 
@@ -1107,7 +1425,7 @@ window.addEventListener('DOMContentLoaded', () => {
    Pages: the list-and-index side of the site. Everything here is generated
    from the data files — no page carries a claim the data cannot support.
    ========================================================================== */
-const CONTACT = 'hello@example.com'; // ← set your own address before deploying
+const CONTACT = 'hello@pujahop.in'; // ← set your own address before deploying
 const YEAR_V = 2026;
 
 const stationFor = (name) => state.stations.find((s) => s.name === name);
@@ -1120,7 +1438,7 @@ function openPage(view) {
   $('#page').hidden = false;
   $('#page').scrollTop = 0;
   $$('.mainnav a').forEach((a) => a.removeAttribute('aria-current'));
-  const navKey = { metro: 'metro', metroIndex: 'metro', routes: 'routes', route: 'routes', guide: 'guide', pandals: 'pandals' }[view.name];
+  const navKey = { metro: 'metro', metroIndex: 'metro', routes: 'routes', route: 'routes', guide: 'guide', help: 'help', pandals: 'pandals' }[view.name];
   if (navKey) $(`.mainnav a[data-nav="${navKey}"]`)?.setAttribute('aria-current', 'page');
   document.title = (view.title || defaultTitle(view));
   if (wire) wire(inner);
@@ -1129,10 +1447,10 @@ function openPage(view) {
 const defaultTitle = (view) => {
   const t = {
     pandals: 'Every pandal', routes: 'Walking routes', metroIndex: 'Pandals by metro',
-    guide: 'Puja guide', about: 'About', legal: 'Privacy and terms', contact: 'Contact',
+    guide: 'Puja guide', help: 'Emergency and help', about: 'About', legal: 'Privacy and terms', contact: 'Contact',
     press: 'Press', live: 'Live queue reports', missing: 'Not found',
   }[view.name];
-  return t ? `${t} — Puja Guide` : 'Puja Guide';
+  return t ? `${t} — PujaHop Kolkata` : 'PujaHop Kolkata';
 };
 
 const backToMap = '<p class="back"><a href="/">← Back to the pandal map</a></p>';
@@ -1140,12 +1458,13 @@ const closePage = (e) => { e.preventDefault(); $('#page').hidden = true; history
 
 function scopeToMap({ area = null, neighbourhood = null, metro = null, slugs = null }, label) {
   state.area = area; state.neighbourhood = neighbourhood; state.metro = metro;
+  state.quickFilter = null;
   state.shown = 45;
   $('#page').hidden = true;
   history.pushState({}, '', '/');
   $('#panel-eyebrow').textContent = 'Filtered';
   $('#panel-title').textContent = label;
-  renderChips(); render(); fitFiltered();
+  renderChips(); syncLocationSelect(); render(); fitFiltered();
   if (slugs && slugs.length) {
     const list = slugs.map((s) => state.bySlug.get(s)).filter(Boolean);
     const b = new maplibregl.LngLatBounds();
@@ -1156,7 +1475,7 @@ function scopeToMap({ area = null, neighbourhood = null, metro = null, slugs = n
 
 const stopRow = (p, i, walk) => `<tr>
   <td>${i}</td>
-  <td><a href="/p/${p.slug}">${esc(p.name)}</a>${p.nameBn ? `<br><span class="faint" lang="bn">${esc(p.nameBn)}</span>` : ''}</td>
+  <td><a href="/p/${p.slug}">${esc(displayName(p))}</a>${state.locale === 'en' && p.nameBn ? `<br><span class="faint" lang="bn">${esc(p.nameBn)}</span>` : ''}</td>
   <td>${esc(p.neighbourhood || p.areaName)}</td>
   <td>${walk == null ? '—' : `${fmtM(walk)}<br><span class="faint">${fmtMin(walk)}</span>`}</td>
   <td>${esc(p.nearestMetro.name)}<br><span class="faint">${fmtM(p.nearestMetro.walkMeters)}</span></td>
@@ -1229,7 +1548,7 @@ PAGES.route = (view) => {
         updatePlanCount();
         $('#page').hidden = true;
         history.pushState({}, '', '/');
-        $('#drawer').hidden = false;
+        openOverlayDrawer('drawer', $('#plan-open'));
         renderPlan(); render(); drawPlanLine();
         select(r.stops[0]);
         toast('Route loaded into your route — edit it as you like.');
@@ -1386,12 +1705,32 @@ PAGES.live = () => {
   };
 };
 
+PAGES.help = () => ({
+  html: `${backToMap}
+    <h1>Emergency &amp; help</h1>
+    <p class="lede">Quick access to public emergency numbers and official city resources. For immediate danger or a medical emergency, call the relevant service directly.</p>
+    <section class="help-emergency" aria-label="Emergency numbers">
+      <h2>Emergency numbers in India</h2>
+      <p><a class="help-number" href="tel:112">112</a> National emergency response</p>
+      <p><a class="help-number" href="tel:100">100</a> Police</p>
+      <p><a class="help-number" href="tel:102">102</a> Ambulance / medical help</p>
+      <p class="fine">If a number does not connect, use 112 for emergency assistance. Verify local availability and current details before relying on non-emergency services.</p>
+    </section>
+    <h2>Official city resources</h2>
+    <div class="help-links">
+      <a href="https://www.kolkatapolice.gov.in/" target="_blank" rel="noopener"><strong>Kolkata Police</strong><br><span class="faint">Official website and public contacts</span></a>
+      <a href="https://www.kmcgov.in/" target="_blank" rel="noopener"><strong>Kolkata Municipal Corporation</strong><br><span class="faint">City services and public information</span></a>
+      <a href="https://mtp.indianrailways.gov.in/" target="_blank" rel="noopener"><strong>Metro Railway Kolkata</strong><br><span class="faint">Official metro notices and passenger information</span></a>
+    </div>
+    <p class="fine">This guide is not an emergency service. We do not maintain verified live locations for police stations, hospitals, medical camps or festival help desks; use official services for current directions.</p>`,
+});
+
 /* ------------------------------------------------------------------ about */
 PAGES.about = () => {
   const s = state.meta;
   return {
     html: `${backToMap}
-      <h1>About Puja Guide</h1>
+      <h1>About PujaHop Kolkata</h1>
       <p class="lede">A free, independent map of Durga Puja in Kolkata. It shows where the pandals are, the nearest metro to each, walking routes for an evening, and directions from wherever you are. No account, no ads, no trackers.</p>
 
       <h2>What is here</h2>
@@ -1476,7 +1815,7 @@ PAGES.contact = () => ({
 PAGES.press = () => ({
   html: `${backToMap}
     <h1>Press</h1>
-    <p class="lede"><strong>Puja Guide</strong> is a free, independent map of Durga Puja in Kolkata: where the pandals are, the nearest metro to each, what is within walking distance, and what visitors are reporting about the queues right now.</p>
+    <p class="lede"><strong>PujaHop Kolkata</strong> is a free, independent map of Durga Puja in Kolkata: where the pandals are, the nearest metro to each, what is within walking distance, and what visitors are reporting about the queues right now.</p>
     <h2>Key numbers</h2>
     <ul>
       <li>${state.meta.pandalCount} pandals mapped across Kolkata and Howrah</li>

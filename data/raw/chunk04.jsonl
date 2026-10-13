@@ -1,13 +1,14 @@
 {"n":"Charu Avenue Nabapally Sangha","b":"নবপল্লী সংঘ","k":"Nabapalli Sangha","z":"II","s":"Charu Avenue","h":"Lake Gardens","la":22.507389,"lo":88.3441019,"g":"osm","m":"Rabindra Sarobar","d":144}
 {"n":"Suruchi Sangha","b":"সুরুচি সংঘ","z":"II","s":"Charu Market","h":"Lake Gardens","la":22.5090969,"lo":88.3341832,"g":"osm","m":"Rabindra Sarobar","d":1180}
 {"n":"Mudiali Club","b":"মুদিয়ালি ক্লাব","z":"II","s":"Abdul Rasul Avenue","h":"Lake Gardens","la":22.5100748,"lo":88.3466256,"g":"osm","m":"Rabindra Sarobar","d":338}
-{"n":"Shib Mandir","b":"শিব মন্দির","z":"II","s":"Lake Avenue Sebaksangha","h":"Lake Gardens","la":22.5110599,"lo":88.3500239,"g":"osm","m":"Rabindra Sarobar","d":631}
+{"n":"Shib Mandir","b":"শিব মন্দির","z":"II","s":"Lake Terrace, near Lake Market","h":"Lake Gardens","la":22.5107,"lo":88.3525,"g":"osm","m":"Rabindra Sarobar","d":631}
 {"n":"Lake Gardens People's Assn.","b":"লেক গার্ডেনস পিপলস অ্যাসোসিয়েশন","z":"II","s":"Prince Anwar Shah Road","h":"Jodhpur Park","la":22.502241,"lo":88.362401,"g":"geocoded","m":"Rabindra Sarobar","d":1823}
 {"n":"Sanghati Puja Samiti","b":"সংহতি পূজা সমিতি","z":"II","s":"Prince Anwar Shah Road","h":"Jodhpur Park","la":22.5028115,"lo":88.3594342,"g":"osm","m":"Rabindra Sarobar","d":1514}
 {"n":"95 Pally","b":"৯৫ পল্লী","z":"II","s":"Jodhpur Park","h":"Jodhpur Park","la":22.5083393,"lo":88.3632252,"g":"osm","m":"Rabindra Sarobar","d":1826}
 {"n":"Pally Mangal","b":"পল্লী মঙ্গল","z":"II","s":"Jodhpur Park","h":"Jodhpur Park","la":22.502921,"lo":88.364595,"g":"osm","m":"Rabindra Sarobar","d":2020}
+{"n":"Pally Mangal","b":"পল্লী মঙ্গল","z":"IV","s":"South Avenue","h":"Santoshpur","la":22.502921,"lo":88.364595,"g":"osm","m":"Rabindra Sarobar","d":2020}
 {"n":"Ballygunge Cultural","b":"বালিগঞ্জ কালচারাল","z":"II","s":"Purna Das Road","h":"Jodhpur Park","la":22.5158837,"lo":88.3558166,"g":"osm","m":"Kalighat","d":1030}
-{"n":"Samajsebi","b":"সমাজসেবী","z":"II","s":"Southern Avenue","h":"Jodhpur Park","la":22.505606,"lo":88.363674,"g":"geocoded","m":"Rabindra Sarobar","d":1876}
+{"n":"Samajsebi","b":"সমাজসেবী","z":"II","s":"Lake View Road","h":"Lake Gardens","la":22.5147361,"lo":88.3559994,"g":"osm","m":"Kalighat","d":1070,"k":"Samaj Sebi Sangha"}
 {"n":"Hindustan Park Sarbojonin","b":"হিন্দুস্থান পার্ক সার্বজনীন","z":"II","s":"Hindustan Park","h":"Jodhpur Park","la":22.517867,"lo":88.362093,"g":"osm","m":"Kalighat","d":1673}
 {"n":"Gariahat Market","b":"গড়িয়াহাট মার্কেট","z":"II","s":"Gariahat Road","h":"Gariahat","la":22.527929,"lo":88.365965,"g":"geocoded","m":"Netaji Bhavan","d":2139}
 {"n":"Kasba Uttarpara Arabinda Sporting Club","b":"কসবা উত্তরপাড়া অরবিন্দ স্পোর্টিং ক্লাব","z":"II","s":"Bijan Setu","h":"Gariahat","la":22.520739,"lo":88.365115,"g":"neighbourhood-anchor","m":"Jatin Das Park","d":1952}

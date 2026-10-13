@@ -1,0 +1,233 @@
+/* PujaHop Kolkata — cinematic intro preloader.
+ *
+ * Self-contained: pure CSS + inline SVG, no network request, no build step.
+ * Everything is scoped to #ph-preloader so it can never leak into the app's
+ * own styles or the map. The overlay is position:fixed, so it does not change
+ * the layout underneath — when it fades, the map is already where it was.
+ *
+ * Colours: black ground, vermilion, marigold gold.
+ * Motion: GPU-friendly transform/opacity only. Fully disabled under
+ * prefers-reduced-motion.
+ */
+
+#ph-preloader {
+  --ph-black: #0a0709;
+  --ph-red: #b8321f;
+  --ph-red-deep: #6d130c;
+  --ph-gold: #e8b73c;
+  --ph-gold-soft: #f7dd9a;
+
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(115% 85% at 50% 6%, rgba(184, 50, 31, .38), transparent 60%),
+    radial-gradient(90% 75% at 50% 118%, rgba(109, 19, 12, .58), transparent 62%),
+    var(--ph-black);
+  color: var(--ph-gold-soft);
+  opacity: 1;
+  transition: opacity .65s ease, visibility .65s ease;
+  -webkit-tap-highlight-color: transparent;
+  /* Safety net: if preloader.js never runs, the overlay still gets out of the
+     way so it can never trap the visitor on a blank screen. */
+  animation: ph-safety 0s 3.5s forwards;
+}
+
+/* faint mandala spokes behind everything */
+#ph-preloader::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(from 0deg at 50% 42%,
+    rgba(232, 183, 60, .07) 0deg 1.1deg, transparent 1.1deg 15deg);
+  -webkit-mask-image: radial-gradient(58% 58% at 50% 42%, #000 0%, transparent 72%);
+  mask-image: radial-gradient(58% 58% at 50% 42%, #000 0%, transparent 72%);
+  opacity: .85;
+  pointer-events: none;
+}
+
+#ph-preloader.is-done {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html.ph-lock, html.ph-lock body { overflow: hidden; }
+
+@keyframes ph-safety { to { opacity: 0; visibility: hidden; pointer-events: none; } }
+
+/* ------------------------------------------------------------ alpana field */
+.ph-intro-sky {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
+
+.ph-alpana {
+  position: absolute;
+  width: min(88vmin, 640px);
+  height: min(88vmin, 640px);
+  opacity: 0;
+}
+.ph-alpana svg { width: 100%; height: 100%; overflow: visible; }
+
+.ph-alpana-a { animation: ph-fade 1s ease .05s forwards, ph-spin 80s linear infinite; }
+.ph-alpana-b {
+  width: min(66vmin, 470px);
+  height: min(66vmin, 470px);
+  animation: ph-fade 1s ease .35s forwards, ph-spin-rev 58s linear infinite;
+}
+
+@keyframes ph-fade { from { opacity: 0; } to { opacity: .9; } }
+@keyframes ph-spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes ph-spin-rev { from { transform: rotate(360deg); } to { transform: rotate(0deg); } }
+
+/* ----------------------------------------------------------------- emblem */
+.ph-emblem {
+  position: relative;
+  width: min(38vmin, 220px);
+  height: min(38vmin, 220px);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  animation: ph-emblem-in 1.1s cubic-bezier(.2, .9, .25, 1) .35s forwards;
+}
+.ph-emblem-halo {
+  position: absolute;
+  inset: -22%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 203, 96, .55), rgba(255, 203, 96, 0) 70%);
+  animation: ph-halo-pulse 3.6s ease-in-out 1.2s infinite;
+}
+.ph-emblem-svg { position: relative; width: 100%; height: 100%; display: block; }
+.ph-emblem .ph-halo { animation: ph-halo-pulse 3.6s ease-in-out 1.2s infinite; }
+
+.ph-trishul {
+  filter: drop-shadow(0 0 5px rgba(255, 203, 96, .85));
+  animation: ph-glow 3.6s ease-in-out 1.2s infinite;
+}
+
+@keyframes ph-emblem-in {
+  from { opacity: 0; transform: scale(.72) rotate(-8deg); }
+  to   { opacity: 1; transform: scale(1) rotate(0deg); }
+}
+@keyframes ph-halo-pulse { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes ph-glow {
+  0%, 100% { filter: drop-shadow(0 0 3px rgba(255, 203, 96, .6)); }
+  50%      { filter: drop-shadow(0 0 9px rgba(255, 203, 96, 1)); }
+}
+
+/* -------------------------------------------------------------- particles */
+.ph-particles { position: absolute; inset: 0; overflow: hidden; }
+
+.ph-particle {
+  position: absolute;
+  bottom: -8vh;
+  width: var(--ph-size, 3px);
+  height: var(--ph-size, 3px);
+  border-radius: 50%;
+  background: radial-gradient(circle, #fff3cf, var(--ph-gold) 55%, rgba(232, 183, 60, 0) 72%);
+  box-shadow: 0 0 6px rgba(232, 183, 60, .8);
+  opacity: 0;
+  animation: ph-rise var(--ph-dur, 5s) linear var(--ph-delay, 0s) infinite;
+}
+
+@keyframes ph-rise {
+  0%   { opacity: 0; transform: translate3d(0, 0, 0) scale(.6); }
+  12%  { opacity: .95; }
+  88%  { opacity: .85; }
+  100% { opacity: 0; transform: translate3d(var(--ph-drift, 0px), -104vh, 0) scale(1.05); }
+}
+
+/* ---------------------------------------------------------------- branding */
+.ph-intro-brand {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 0 1.4rem;
+  margin-top: min(46vmin, 340px);
+  opacity: 0;
+  animation: ph-brand-in 1s ease .5s forwards;
+}
+.ph-intro-om {
+  margin: 0;
+  font-size: clamp(1.6rem, 6vw, 2.4rem);
+  color: var(--ph-gold);
+  text-shadow: 0 0 16px rgba(232, 183, 60, .7);
+}
+.ph-intro-title {
+  margin: .12em 0 .1em;
+  font-size: clamp(1.7rem, 7.2vw, 3rem);
+  font-weight: 800;
+  letter-spacing: -.015em;
+  line-height: 1.05;
+  color: #fff6e0;
+  text-shadow: 0 2px 24px rgba(184, 50, 31, .55);
+}
+.ph-intro-title span {
+  background: linear-gradient(100deg, #ffe9b0, var(--ph-gold) 45%, #b8860b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ph-intro-sub {
+  margin: 0;
+  font-size: clamp(.72rem, 2.6vw, .9rem);
+  letter-spacing: .22em;
+  text-transform: uppercase;
+  color: rgba(247, 221, 154, .78);
+}
+@keyframes ph-brand-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ------------------------------------------------------------- skip intro */
+.ph-skip {
+  position: absolute;
+  right: max(14px, env(safe-area-inset-right));
+  bottom: max(16px, env(safe-area-inset-bottom));
+  z-index: 3;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--ph-gold-soft);
+  background: rgba(10, 7, 9, .35);
+  border: 1px solid rgba(232, 183, 60, .55);
+  border-radius: 999px;
+  padding: 9px 16px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background .2s ease, border-color .2s ease, transform .2s ease;
+  opacity: 0;
+  animation: ph-brand-in .8s ease .9s forwards;
+}
+.ph-skip:hover { background: rgba(232, 183, 60, .14); border-color: var(--ph-gold); }
+.ph-skip:focus-visible { outline: 2px solid var(--ph-gold-soft); outline-offset: 2px; }
+.ph-skip:active { transform: scale(.97); }
+
+/* ------------------------------------------------------------- responsive */
+@media (max-width: 480px) {
+  .ph-intro-brand { margin-top: min(50vmin, 320px); }
+  .ph-intro-sub { letter-spacing: .16em; }
+}
+
+/* --------------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  #ph-preloader { animation: none; }
+  .ph-alpana { animation: ph-fade .01s linear forwards !important; }
+  .ph-emblem,
+  .ph-intro-brand,
+  .ph-skip { animation: none; opacity: 1; }
+  .ph-emblem-halo,
+  .ph-emblem .ph-halo,
+  .ph-trishul,
+  .ph-particle { animation: none !important; }
+  .ph-particle { display: none; }
+}
